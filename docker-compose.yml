@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: souppack-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: souppack
+      POSTGRES_PASSWORD: souppack
+      POSTGRES_DB: souppack
+    ports:
+      - "5432:5432"
+    volumes:
+      - souppack-pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U souppack -d souppack"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  souppack-pg-data:

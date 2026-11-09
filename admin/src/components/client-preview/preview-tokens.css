@@ -1,0 +1,79 @@
+/* Клиентские CSS-токены, скопированные из client/src/assets/style.css под обёрткой .client-preview,
+ * чтобы не конфликтовать с токенами админки. При изменении клиентских токенов — обновить здесь. */
+.client-preview {
+    --color-bg:        #FFF4E2;
+    --color-sf:        #FFFFFF;
+    --color-sf2:       #FFF4E2;
+    --color-ink:       #2A1209;
+    --color-mut:       #6B4A33;
+    --color-fnt:       #7A5A42;
+    --color-ln:        #EAD6BA;
+    --color-ln2:       #E5CDAE;
+    --color-acc:       #D63A1C;
+    --color-acct:      #B8300C;
+    --color-btr:       #FFD25A;
+    --color-tint-tom:  #FCD9C4;
+    --color-tint-chi:  #FDEBB8;
+    --color-tint-pum:  #FFDDB5;
+    --color-tint-len:  #EFD3B8;
+    --color-tint-spa:  #FCCFBC;
+    --color-tint-col:  #DCD2C4;
+    --color-ok-bg:     #EAF4E2;
+    --color-ok:        #1F3D14;
+    --color-oks:       #3F7A2A;
+    color: var(--color-ink);
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    background: var(--color-bg);
+}
+.client-preview * { box-sizing: border-box; }
+
+.cp-card {
+    background: var(--color-sf);
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 1px 0 var(--color-ln);
+    display: flex;
+    flex-direction: column;
+}
+.cp-tint-tom { background: var(--color-tint-tom); }
+.cp-tint-chi { background: var(--color-tint-chi); }
+.cp-tint-pum { background: var(--color-tint-pum); }
+.cp-tint-len { background: var(--color-tint-len); }
+.cp-tint-spa { background: var(--color-tint-spa); }
+.cp-tint-col { background: var(--color-tint-col); }
+
+.cp-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--color-acc);
+    color: #fff;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 999px;
+}
+.cp-strike {
+    color: var(--color-fnt);
+    text-decoration: line-through;
+    font-size: 11px;
+}
+.cp-price {
+    font-weight: 800;
+    font-size: 15px;
+    line-height: 1;
+    color: var(--color-ink);
+}
+.cp-price-acc { color: var(--color-acct); }
+.cp-badge-dark {
+    background: var(--color-ink);
+    color: var(--color-btr);
+    font-weight: 800;
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 999px;
+}

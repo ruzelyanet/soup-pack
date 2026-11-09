@@ -1,0 +1,14 @@
+{
+  "kind": "collectionType",
+  "collectionName": "clients",
+  "info": { "singularName": "client", "pluralName": "clients", "displayName": "Клиент" },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "fullName": { "type": "string" },
+    "phone":    { "type": "string", "required": true, "unique": true },
+    "address":  { "type": "string" },
+    "lat":      { "type": "decimal" },
+    "lng":      { "type": "decimal" },
+    "orders":   { "type": "relation", "relation": "oneToMany", "target": "api::order.order", "mappedBy": "client" }
+  }
+}

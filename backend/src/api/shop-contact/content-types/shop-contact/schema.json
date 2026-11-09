@@ -1,0 +1,15 @@
+{
+    "kind": "singleType",
+    "collectionName": "shop_contacts",
+    "info": {
+        "singularName": "shop-contact",
+        "pluralName": "shop-contacts",
+        "displayName": "Контакты магазина"
+    },
+    "options": { "draftAndPublish": false },
+    "attributes": {
+        "phone":    { "type": "string" },
+        "workHours": { "type": "string" },
+        "city":     { "type": "string" }
+    }
+}

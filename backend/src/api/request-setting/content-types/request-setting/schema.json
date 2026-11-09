@@ -1,0 +1,16 @@
+{
+  "kind": "singleType",
+  "collectionName": "request_settings",
+  "info": { "singularName": "request-setting", "pluralName": "request-settings", "displayName": "Настройки заявок" },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "yellowAfterMin":        { "type": "integer", "default": 10 },
+    "redAfterMin":           { "type": "integer", "default": 30 },
+    "telegramEnabled":       { "type": "boolean", "default": false },
+    "telegramBotToken":      { "type": "string", "private": true },
+    "telegramChatIds":       { "type": "text" },
+    "overdueCheckEnabled":   { "type": "boolean", "default": false },
+    "shopBotEnabled":        { "type": "boolean", "default": true },
+    "shopBotGreeting":       { "type": "text" }
+  }
+}

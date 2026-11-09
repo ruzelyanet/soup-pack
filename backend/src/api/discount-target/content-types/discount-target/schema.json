@@ -1,0 +1,18 @@
+{
+    "kind": "collectionType",
+    "collectionName": "discount_targets",
+    "info": {
+        "singularName": "discount-target",
+        "pluralName": "discount-targets",
+        "displayName": "Цель скидки"
+    },
+    "options": { "draftAndPublish": false },
+    "attributes": {
+        "discount":    { "type": "relation", "relation": "manyToOne", "target": "api::discount.discount", "inversedBy": "targets" },
+        "targetType":  { "type": "enumeration", "enum": ["product", "category", "order-set", "all-products"], "required": true },
+        "product":     { "type": "relation", "relation": "manyToOne", "target": "api::product.product" },
+        "category":    { "type": "relation", "relation": "manyToOne", "target": "api::category.category" },
+        "orderSet":    { "type": "relation", "relation": "manyToOne", "target": "api::order-set.order-set" },
+        "exclude":     { "type": "boolean", "default": false }
+    }
+}

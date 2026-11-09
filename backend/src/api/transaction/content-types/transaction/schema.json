@@ -1,0 +1,26 @@
+{
+  "kind": "collectionType",
+  "collectionName": "transactions",
+  "info": { "singularName": "transaction", "pluralName": "transactions", "displayName": "Транзакция" },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "code":            { "type": "string", "unique": true, "required": true },
+    "kind":            { "type": "enumeration", "enum": ["payment", "refund"], "required": true },
+    "method":          { "type": "enumeration", "enum": ["cash", "card", "click", "payme", "transfer"], "required": true },
+    "amount":          { "type": "integer", "required": true },
+    "currency":        { "type": "string", "default": "UZS" },
+    "status":          { "type": "enumeration", "enum": ["completed", "cancelled"], "default": "completed", "required": true },
+    "paidAt":          { "type": "datetime" },
+    "comment":         { "type": "text" },
+    "externalId":      { "type": "string", "unique": true },
+    "idempotencyKey":  { "type": "string", "unique": true },
+    "cancelledAt":     { "type": "datetime" },
+    "cancelReason":    { "type": "string" },
+
+    "order":        { "type": "relation", "relation": "manyToOne", "target": "api::order.order", "inversedBy": "transactions" },
+    "client":       { "type": "relation", "relation": "manyToOne", "target": "api::client.client" },
+    "receivedBy":        { "type": "relation", "relation": "manyToOne", "target": "api::employee.employee" },
+    "createdByEmployee": { "type": "relation", "relation": "manyToOne", "target": "api::employee.employee" },
+    "cancelledBy":       { "type": "relation", "relation": "manyToOne", "target": "api::employee.employee" }
+  }
+}

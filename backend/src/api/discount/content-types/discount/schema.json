@@ -1,0 +1,31 @@
+{
+    "kind": "collectionType",
+    "collectionName": "discounts",
+    "info": {
+        "singularName": "discount",
+        "pluralName": "discounts",
+        "displayName": "Скидка"
+    },
+    "options": { "draftAndPublish": false },
+    "attributes": {
+        "name":              { "type": "string", "required": true },
+        "publicLabel":       { "type": "string" },
+        "status":            { "type": "enumeration", "enum": ["draft", "active", "paused", "archived"], "default": "draft", "required": true },
+        "level":             { "type": "enumeration", "enum": ["line", "set", "order"], "required": true },
+        "benefitType":       { "type": "enumeration", "enum": ["percent", "fixed_amount", "fixed_price"], "required": true },
+        "benefitValue":      { "type": "integer", "required": true },
+        "maxDiscountAmount": { "type": "integer" },
+        "startsAt":          { "type": "datetime" },
+        "endsAt":            { "type": "datetime" },
+        "conditions":        { "type": "json" },
+        "priority":          { "type": "integer", "default": 100 },
+        "stackable":         { "type": "boolean", "default": true },
+        "exclusiveGroup":    { "type": "string" },
+        "showInCatalog":     { "type": "boolean", "default": true },
+        "version":           { "type": "integer", "default": 1 },
+        "previousVersion":   { "type": "relation", "relation": "oneToOne", "target": "api::discount.discount" },
+        "targets":           { "type": "relation", "relation": "oneToMany", "target": "api::discount-target.discount-target", "mappedBy": "discount" },
+        "events":            { "type": "relation", "relation": "oneToMany", "target": "api::discount-event.discount-event", "mappedBy": "discount" },
+        "createdByEmployee": { "type": "relation", "relation": "manyToOne", "target": "api::employee.employee" }
+    }
+}

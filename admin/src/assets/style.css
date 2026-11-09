@@ -1,0 +1,57 @@
+@import "tailwindcss";
+@import "primeicons/primeicons.css";
+
+@theme {
+    --color-ink-50:  #f6f6f6;
+    --color-ink-100: #ededed;
+    --color-ink-200: #cfcfcf;
+    --color-ink-300: #a3a3a3;
+    --color-ink-400: #707070;
+    --color-ink-500: #3f3f3f;
+    --color-ink-600: #262626;
+    --color-ink-700: #171717;
+    --color-ink-800: #0f0f0f;
+    --color-ink-900: #0a0a0a;
+
+    --color-cream-50:  #faf5ec;
+    --color-cream-100: #f4ead6;
+    --color-cream-200: #ead5ad;
+    --color-cream-300: #d4b88c;
+
+    --color-tomato-500: #d14836;
+    --color-tomato-600: #b03628;
+
+    --color-olive-500: #6b7a3f;
+    --color-saffron-300: #e8b824;
+
+    --font-display: "Montserrat", "Inter", system-ui, sans-serif;
+    --font-sans:    "Inter", system-ui, sans-serif;
+}
+
+html, body, #app { height: 100%; }
+html { scrollbar-gutter: stable; }
+
+/* Единый pаспределённый пагинатор для всех DataTable в админке. */
+.p-datatable .p-paginator { justify-content: flex-end; }
+.p-datatable .p-paginator .p-paginator-current {
+    margin-right: auto;
+    color: var(--color-ink-500);
+    font-size: 13px;
+}
+
+body {
+    font-family: var(--font-sans);
+    background: var(--color-ink-50);
+    color: var(--color-ink-900);
+    -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+}
+
+.p-component { font-family: var(--font-sans); }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--color-ink-200); border-radius: 10px; }

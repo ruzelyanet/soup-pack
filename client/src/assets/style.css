@@ -1,0 +1,109 @@
+@import "tailwindcss";
+@import "primeicons/primeicons.css";
+
+@theme {
+    /* Light theme — SOUP PUCK */
+    --color-bg:        #FFF4E2;
+    --color-sf:        #FFFFFF;
+    --color-sf2:       #FFF4E2;
+    --color-ink:       #2A1209;
+    --color-mut:       #6B4A33;
+    --color-fnt:       #7A5A42;
+    --color-ln:        #EAD6BA;
+    --color-ln2:       #E5CDAE;
+    --color-acc:       #D63A1C;
+    --color-acct:      #B8300C;
+    --color-btr:       #FFD25A;
+    --color-deep:      #2A1209;
+    --color-deepink:   #FFF1DC;
+    --color-deepmut:   #E2C9B2;
+    --color-ring:      rgba(255, 255, 255, 0.65);
+    --color-tint-tom:  #FCD9C4;
+    --color-tint-chi:  #FDEBB8;
+    --color-tint-pum:  #FFDDB5;
+    --color-tint-len:  #EFD3B8;
+    --color-tint-spa:  #FCCFBC;
+    --color-tint-col:  #DCD2C4;
+    --color-ok-bg:     #EAF4E2;
+    --color-ok:        #1F3D14;
+    --color-oks:       #3F7A2A;
+
+    --font-display: "Unbounded", "Manrope", system-ui, sans-serif;
+    --font-sans:    "Manrope", system-ui, sans-serif;
+}
+
+/* Dark theme — [data-theme="dark"] on <html> */
+html[data-theme="dark"] {
+    --color-bg:      #160B06;
+    --color-sf:      #26160E;
+    --color-sf2:     #331F14;
+    --color-ink:     #FFF1DC;
+    --color-mut:     #E0C7AE;
+    --color-fnt:     #BFA28A;
+    --color-ln:      #3A2418;
+    --color-ln2:     #4D3223;
+    --color-acc:     #D63A1C;
+    --color-acct:    #FF8F63;
+    --color-btr:     #FFD25A;
+    --color-deep:    #3A1E10;
+    --color-deepink: #FFF1DC;
+    --color-deepmut: #E2C9B2;
+    --color-ring:    rgba(255, 241, 220, 0.14);
+    --color-tint-tom: #4A1F12;
+    --color-tint-chi: #45330F;
+    --color-tint-pum: #4A2C10;
+    --color-tint-len: #3D2414;
+    --color-tint-spa: #4A1F14;
+    --color-tint-col: #241A14;
+    --color-ok-bg:   #1D2C16;
+    --color-ok:      #CFE8BF;
+    --color-oks:     #7BC25A;
+}
+
+/* `overflow-x: clip` вместо `hidden` — не создаёт scroll-container,
+   `position: sticky` внутри продолжает работать. */
+html, body, #app {
+    height: 100%;
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: clip;
+}
+#app { min-width: 0; }
+
+body {
+    font-family: var(--font-sans);
+    background: var(--color-bg);
+    color: var(--color-ink);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overscroll-behavior-y: none;
+}
+
+/* Каркас mobile-first: ширина = min(100%, 500px). Через утилиту, не inline. */
+.app-frame { width: min(100%, 500px); }
+
+h1, h2, h3, .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.03em;
+}
+
+.p-component { font-family: var(--font-sans); }
+
+/* PrimeVue Toast — по дефолту `width: 25rem` + fixed right:20px.
+   На узких экранах это выпирает за правый край и даёт горизонтальный scroll body,
+   из-за чего приложение (`flex justify-center`) съезжает влево. Ограничиваем. */
+.p-toast {
+    max-width: calc(100vw - 24px) !important;
+    width: min(25rem, calc(100vw - 24px)) !important;
+}
+
+/* Hide scrollbar for horizontal pill rows */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Smooth scroll */
+html { scroll-behavior: smooth; }
+
+/* Safe areas */
+.safe-top    { padding-top:    env(safe-area-inset-top); }
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }

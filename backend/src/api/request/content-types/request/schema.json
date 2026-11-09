@@ -1,0 +1,36 @@
+{
+  "kind": "collectionType",
+  "collectionName": "requests",
+  "info": { "singularName": "request", "pluralName": "requests", "displayName": "Заявка" },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "code":          { "type": "string", "unique": true, "required": true },
+    "type":          { "type": "enumeration", "enum": ["individual", "shop"], "default": "individual", "required": true },
+    "name":          { "type": "string", "required": true },
+    "phone":         { "type": "string", "required": true },
+    "values":        { "type": "json" },
+    "extra":         { "type": "json" },
+    "comment":       { "type": "text" },
+    "source":        { "type": "enumeration", "enum": ["manual", "form", "api"], "default": "manual", "required": true },
+    "sourceDetail":  { "type": "string" },
+    "position":      { "type": "integer", "default": 0 },
+    "acceptedById":  { "type": "integer" },
+    "acceptedAt":    { "type": "datetime" },
+    "outcome":       { "type": "enumeration", "enum": ["open", "converted", "lost"], "default": "open", "required": true },
+    "lostReason":    { "type": "string" },
+    "lostNote":      { "type": "text" },
+    "lockedAt":      { "type": "datetime" },
+    "archived":      { "type": "boolean", "default": false },
+    "columnEnteredAt": { "type": "datetime" },
+    "idempotencyKey": { "type": "string", "unique": true, "private": true },
+
+    "client":        { "type": "relation", "relation": "manyToOne", "target": "api::client.client" },
+    "column":        { "type": "relation", "relation": "manyToOne", "target": "api::request-column.request-column", "inversedBy": "requests" },
+    "assignee":      { "type": "relation", "relation": "manyToOne", "target": "api::employee.employee" },
+    "createdByEmployee": { "type": "relation", "relation": "manyToOne", "target": "api::employee.employee" },
+
+    "goalStates":    { "type": "relation", "relation": "oneToMany", "target": "api::request-goal-state.request-goal-state", "mappedBy": "request" },
+    "events":        { "type": "relation", "relation": "oneToMany", "target": "api::request-event.request-event", "mappedBy": "request" },
+    "order":         { "type": "relation", "relation": "oneToOne", "target": "api::order.order", "mappedBy": "request" }
+  }
+}

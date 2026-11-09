@@ -1,0 +1,22 @@
+{
+    "collectionName": "components_order_lines",
+    "info": { "displayName": "Строка заказа", "icon": "list" },
+    "options": {},
+    "attributes": {
+        "product":            { "type": "relation", "relation": "oneToOne", "target": "api::product.product" },
+        "name":               { "type": "string", "required": true },
+        "price":              { "type": "decimal", "required": true },
+        "qty":                { "type": "integer", "required": true, "default": 1 },
+
+        "lineKey":             { "type": "string" },
+        "basePrice":           { "type": "integer" },
+        "priceId":             { "type": "integer" },
+        "unitPrice":           { "type": "integer" },
+        "orderDiscountAmount": { "type": "integer", "default": 0 },
+        "lineTotal":           { "type": "integer" },
+        "orderSetId":          { "type": "integer" },
+        "setInstance":         { "type": "string" },
+        "discounts":           { "type": "json" },
+        "fromSetName":         { "type": "string" }
+    }
+}

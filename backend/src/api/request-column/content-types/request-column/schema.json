@@ -1,0 +1,15 @@
+{
+  "kind": "collectionType",
+  "collectionName": "request_columns",
+  "info": { "singularName": "request-column", "pluralName": "request-columns", "displayName": "Колонка заявок" },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "name":     { "type": "string", "required": true },
+    "color":    { "type": "string" },
+    "kind":     { "type": "enumeration", "enum": ["new", "custom", "done"], "default": "custom", "required": true },
+    "position": { "type": "integer", "required": true, "default": 0 },
+    "requireGoals": { "type": "boolean", "default": false },
+    "goals":    { "type": "relation", "relation": "oneToMany", "target": "api::request-goal.request-goal", "mappedBy": "column" },
+    "requests": { "type": "relation", "relation": "oneToMany", "target": "api::request.request", "mappedBy": "column" }
+  }
+}

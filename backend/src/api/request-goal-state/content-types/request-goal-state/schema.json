@@ -1,0 +1,14 @@
+{
+  "kind": "collectionType",
+  "collectionName": "request_goal_states",
+  "info": { "singularName": "request-goal-state", "pluralName": "request-goal-states", "displayName": "Состояние цели заявки" },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "done":    { "type": "boolean", "default": false },
+    "removed": { "type": "boolean", "default": false },
+    "goalText": { "type": "string" },
+    "request": { "type": "relation", "relation": "manyToOne", "target": "api::request.request", "inversedBy": "goalStates" },
+    "goal":    { "type": "relation", "relation": "manyToOne", "target": "api::request-goal.request-goal", "inversedBy": "states" },
+    "column":  { "type": "relation", "relation": "manyToOne", "target": "api::request-column.request-column" }
+  }
+}

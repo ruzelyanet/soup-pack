@@ -1,0 +1,13 @@
+{
+  "kind": "collectionType",
+  "collectionName": "request_events",
+  "info": { "singularName": "request-event", "pluralName": "request-events", "displayName": "Событие заявки" },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "kind":    { "type": "string", "required": true },
+    "payload": { "type": "json" },
+    "note":    { "type": "text" },
+    "request": { "type": "relation", "relation": "manyToOne", "target": "api::request.request", "inversedBy": "events" },
+    "actor":   { "type": "relation", "relation": "manyToOne", "target": "api::employee.employee" }
+  }
+}

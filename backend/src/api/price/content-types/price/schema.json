@@ -1,0 +1,18 @@
+{
+    "kind": "collectionType",
+    "collectionName": "prices",
+    "info": {
+        "singularName": "price",
+        "pluralName": "prices",
+        "displayName": "Цена"
+    },
+    "options": { "draftAndPublish": false },
+    "attributes": {
+        "product":   { "type": "relation", "relation": "manyToOne", "target": "api::product.product", "inversedBy": "prices" },
+        "amount":    { "type": "integer", "required": true },
+        "validFrom": { "type": "datetime", "required": true },
+        "validTo":   { "type": "datetime" },
+        "comment":   { "type": "string" },
+        "createdByEmployee": { "type": "relation", "relation": "manyToOne", "target": "api::employee.employee" }
+    }
+}

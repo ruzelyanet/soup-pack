@@ -1,0 +1,14 @@
+{
+  "kind": "collectionType",
+  "collectionName": "banners",
+  "info": { "singularName": "banner", "pluralName": "banners", "displayName": "Баннер" },
+  "options": { "draftAndPublish": true },
+  "attributes": {
+    "title":    { "type": "string", "required": true },
+    "subtitle": { "type": "string" },
+    "image":    { "type": "media", "multiple": false, "allowedTypes": ["images"] },
+    "linkUrl":  { "type": "string" },
+    "sort":     { "type": "integer", "default": 0 },
+    "active":   { "type": "boolean", "default": true }
+  }
+}

@@ -1,0 +1,10 @@
+node_modules
+dist
+.env
+.env.local
+.DS_Store
+*.log
+backend/.cache
+backend/.tmp
+backend/build
+backend/types/generated

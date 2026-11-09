@@ -1,0 +1,9 @@
+{
+    "collectionName": "components_order_set_items",
+    "info": { "displayName": "Элемент набора", "icon": "cube" },
+    "options": {},
+    "attributes": {
+        "product": { "type": "relation", "relation": "oneToOne", "target": "api::product.product", "required": true },
+        "qty":     { "type": "integer", "required": true, "default": 1 }
+    }
+}

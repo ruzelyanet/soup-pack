@@ -1,0 +1,343 @@
+<script setup lang="ts">
+import { computed, reactive, ref, watch } from 'vue'
+import Dialog from 'primevue/dialog'
+import Button from 'primevue/button'
+import { useToast } from 'primevue/usetoast'
+import { Products, OrderSets } from '@/services/resources'
+import { StaffOrders } from '@/services/orders'
+import type { Order, OrderPreview, OrderSet, Product } from '@/services/resources'
+
+type DeliveryMethod = 'courier_now' | 'preorder'
+type PaymentMethod = 'cash' | 'card' | 'click' | 'payme' | 'transfer'
+
+type LineRow = {
+    productId: number | null
+    name: string
+    price: number
+    qty: number
+    /** Если строка пришла из набора — orderSetId для сервера, чтобы применить скидку набора. */
+    orderSetId?: number | null
+    fromSetName?: string | null
+}
+
+type Prefill = {
+    requestId?: number
+    client?: { fullName?: string; phone?: string; address?: string; lat?: number | null; lng?: number | null }
+    comment?: string
+}
+
+const props = defineProps<{
+    visible: boolean
+    prefill?: Prefill | null
+}>()
+
+const emit = defineEmits<{
+    (e: 'update:visible', v: boolean): void
+    (e: 'created', order: Order): void
+}>()
+
+const toast = useToast()
+
+const client = reactive({
+    fullName: '',
+    phone: '',
+    address: '',
+    lat: null as number | null,
+    lng: null as number | null,
+})
+
+const form = reactive({
+    paymentMethod: 'cash' as PaymentMethod,
+    deliveryMethod: 'courier_now' as DeliveryMethod,
+    deliverySlotAt: null as string | null,
+    comment: '',
+})
+
+const lines = ref<LineRow[]>([])
+const products = ref<Product[]>([])
+const sets = ref<OrderSet[]>([])
+const catalogLoading = ref(false)
+const search = ref('')
+
+const preview = ref<OrderPreview | null>(null)
+const previewing = ref(false)
+const saving = ref(false)
+
+const filteredProducts = computed(() => {
+    const s = search.value.trim().toLowerCase()
+    if (!s) return products.value
+    return products.value.filter((p) => p.name.toLowerCase().includes(s))
+})
+
+async function loadCatalog() {
+    if (products.value.length) return
+    catalogLoading.value = true
+    try {
+        const [ps, ss] = await Promise.all([
+            Products.list({ populate: ['category'] }),
+            OrderSets.list({ populate: ['items.product'] }),
+        ])
+        products.value = ps
+        sets.value = ss
+    } catch (e: any) {
+        toast.add({ severity: 'error', summary: 'Каталог', detail: e?.message, life: 2500 })
+    } finally {
+        catalogLoading.value = false
+    }
+}
+
+function addProduct(p: Product) {
+    const existing = lines.value.find((l) => l.productId === p.id && !l.fromSetName)
+    if (existing) {
+        existing.qty += 1
+    } else {
+        lines.value.push({
+            productId: p.id,
+            name: p.name,
+            price: p.price,
+            qty: 1,
+        })
+    }
+}
+
+function addSet(s: OrderSet) {
+    for (const it of s.items || []) {
+        if (!it.product) continue
+        lines.value.push({
+            productId: it.product.id,
+            name: it.product.name,
+            price: it.product.price,
+            qty: it.qty,
+            orderSetId: s.id,
+            fromSetName: s.name,
+        })
+    }
+}
+
+function removeLine(idx: number) {
+    lines.value.splice(idx, 1)
+}
+
+function buildPayload() {
+    return {
+        client: {
+            fullName: client.fullName.trim() || undefined,
+            phone: client.phone.trim(),
+            address: client.address.trim() || null,
+            lat: client.lat,
+            lng: client.lng,
+        },
+        items: lines.value.map((l) => ({
+            productId: l.productId,
+            qty: l.qty,
+            orderSetId: l.orderSetId ?? null,
+            fromSetName: l.fromSetName ?? null,
+        })),
+        paymentMethod: form.paymentMethod,
+        deliveryMethod: form.deliveryMethod,
+        deliverySlotAt: form.deliveryMethod === 'preorder' ? form.deliverySlotAt : null,
+        comment: form.comment.trim() || null,
+        address: client.address.trim() || null,
+        lat: client.lat,
+        lng: client.lng,
+    }
+}
+
+async function refreshPreview() {
+    if (!client.phone.trim() || !lines.value.length) {
+        preview.value = null
+        return
+    }
+    previewing.value = true
+    try {
+        preview.value = await StaffOrders.preview(buildPayload())
+    } catch (e: any) {
+        preview.value = null
+    } finally {
+        previewing.value = false
+    }
+}
+
+let previewTimer: number | null = null
+function schedulePreview() {
+    if (previewTimer) window.clearTimeout(previewTimer)
+    previewTimer = window.setTimeout(refreshPreview, 350)
+}
+
+watch([() => lines.value.length, () => form.deliveryMethod, () => client.phone], schedulePreview)
+watch(() => lines.value, schedulePreview, { deep: true })
+
+watch(() => props.visible, (v) => {
+    if (!v) return
+    // Сброс + prefill.
+    client.fullName = props.prefill?.client?.fullName || ''
+    client.phone = props.prefill?.client?.phone || ''
+    client.address = props.prefill?.client?.address || ''
+    client.lat = props.prefill?.client?.lat ?? null
+    client.lng = props.prefill?.client?.lng ?? null
+    form.paymentMethod = 'cash'
+    form.deliveryMethod = 'courier_now'
+    form.deliverySlotAt = null
+    form.comment = props.prefill?.comment || ''
+    lines.value = []
+    preview.value = null
+    loadCatalog()
+})
+
+async function save() {
+    if (!client.phone.trim()) {
+        toast.add({ severity: 'warn', summary: 'Нужен телефон клиента', life: 2500 })
+        return
+    }
+    if (!lines.value.length) {
+        toast.add({ severity: 'warn', summary: 'Нет позиций в заказе', life: 2500 })
+        return
+    }
+    saving.value = true
+    try {
+        const payload = buildPayload()
+        const order = props.prefill?.requestId
+            ? await StaffOrders.convert(props.prefill.requestId, payload)
+            : await StaffOrders.createManual(payload)
+        toast.add({ severity: 'success', summary: `Заказ ${order.code} создан`, life: 2000 })
+        emit('created', order)
+        emit('update:visible', false)
+    } catch (e: any) {
+        const code = e?.response?.data?.error?.message
+        if (code === 'REQUEST_ALREADY_CONVERTED') {
+            toast.add({ severity: 'warn', summary: 'Заявка уже конвертирована', life: 3000 })
+            emit('update:visible', false)
+        } else {
+            toast.add({ severity: 'error', summary: 'Ошибка', detail: code || e?.message, life: 3500 })
+        }
+    } finally {
+        saving.value = false
+    }
+}
+
+function fmt(n: number | null | undefined) {
+    return new Intl.NumberFormat('ru-RU').format(Math.round(Number(n || 0))) + ' сум'
+}
+</script>
+
+<template>
+    <Dialog :visible="visible" @update:visible="(v) => emit('update:visible', v)"
+            modal :header="prefill?.requestId ? 'Создать заказ из заявки' : 'Новый заказ'"
+            :style="{ width: '960px' }" dismissable-mask>
+        <div class="grid grid-cols-[1.4fr,1fr] gap-5">
+            <div class="space-y-4">
+                <!-- Клиент -->
+                <div class="bg-ink-50 rounded-xl p-4 space-y-3">
+                    <div class="font-display font-bold text-sm">Клиент</div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input v-model="client.fullName" placeholder="Имя"
+                               class="rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm focus:outline-none focus:border-ink-900" />
+                        <input v-model="client.phone" placeholder="+998 __ ___ __ __"
+                               class="rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm focus:outline-none focus:border-ink-900" />
+                    </div>
+                    <input v-model="client.address" placeholder="Адрес"
+                           class="w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm focus:outline-none focus:border-ink-900" />
+                </div>
+
+                <!-- Каталог -->
+                <div class="bg-white border border-ink-100 rounded-xl p-4 space-y-3">
+                    <div class="flex items-center gap-2">
+                        <div class="font-display font-bold text-sm">Каталог</div>
+                        <input v-model="search" placeholder="Поиск продукта…"
+                               class="ml-auto rounded-lg border border-ink-200 px-3 py-1.5 text-xs focus:outline-none focus:border-ink-900" />
+                    </div>
+                    <div v-if="catalogLoading" class="text-xs text-ink-400">Загрузка…</div>
+                    <div v-else class="grid grid-cols-2 gap-2 max-h-56 overflow-y-auto">
+                        <button v-for="p in filteredProducts" :key="`p-${p.id}`" type="button"
+                                class="rounded-lg border border-ink-100 hover:border-tomato-500 text-left px-3 py-2 text-xs transition"
+                                @click="addProduct(p)">
+                            <div class="font-semibold truncate">{{ p.name }}</div>
+                            <div class="text-ink-400 mt-0.5">{{ fmt(p.price) }}</div>
+                        </button>
+                    </div>
+                    <div v-if="sets.length" class="pt-2 border-t border-ink-100 space-y-1">
+                        <div class="text-[10px] font-bold uppercase tracking-wider text-ink-400">Наборы</div>
+                        <button v-for="s in sets" :key="`s-${s.id}`" type="button"
+                                class="w-full rounded-lg border border-olive-500/40 text-left px-3 py-2 text-xs hover:bg-olive-500/5 transition"
+                                @click="addSet(s)">
+                            <div class="font-semibold truncate">{{ s.name }}</div>
+                            <div class="text-ink-400">{{ (s.items || []).length }} поз.</div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Корзина + итоги -->
+            <div class="space-y-4">
+                <div class="bg-white border border-ink-100 rounded-xl p-4">
+                    <div class="font-display font-bold text-sm mb-2">Позиции</div>
+                    <div v-if="!lines.length" class="text-xs text-ink-400 py-2">Пока пусто. Добавьте позиции из каталога →</div>
+                    <ul class="divide-y divide-ink-100">
+                        <li v-for="(l, idx) in lines" :key="idx" class="py-2 flex items-center gap-2">
+                            <div class="min-w-0 flex-1">
+                                <div class="text-sm font-semibold truncate">{{ l.name }}</div>
+                                <div class="text-[11px] text-ink-400">
+                                    {{ fmt(l.price) }}
+                                    <span v-if="l.fromSetName">· {{ l.fromSetName }}</span>
+                                </div>
+                            </div>
+                            <input v-model.number="l.qty" type="number" min="1"
+                                   class="w-14 rounded-lg border border-ink-200 bg-white px-2 py-1 text-sm text-center" />
+                            <button type="button" class="rounded-md p-1 text-tomato-500 hover:bg-tomato-500/10" @click="removeLine(idx)">
+                                <i class="pi pi-trash text-xs"></i>
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="bg-white border border-ink-100 rounded-xl p-4 space-y-3">
+                    <div class="font-display font-bold text-sm">Доставка и оплата</div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button"
+                                class="rounded-xl py-2 text-xs font-semibold border transition"
+                                :class="form.deliveryMethod === 'courier_now' ? 'bg-ink-900 text-cream-50 border-ink-900' : 'border-ink-200 hover:border-ink-400'"
+                                @click="form.deliveryMethod = 'courier_now'">Курьером</button>
+                        <button type="button"
+                                class="rounded-xl py-2 text-xs font-semibold border transition"
+                                :class="form.deliveryMethod === 'preorder' ? 'bg-ink-900 text-cream-50 border-ink-900' : 'border-ink-200 hover:border-ink-400'"
+                                @click="form.deliveryMethod = 'preorder'">Предзаказ</button>
+                    </div>
+                    <input v-if="form.deliveryMethod === 'preorder'" v-model="form.deliverySlotAt" type="datetime-local"
+                           class="w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm" />
+                    <select v-model="form.paymentMethod"
+                            class="w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm">
+                        <option value="cash">Наличные</option>
+                        <option value="card">Карта</option>
+                        <option value="click">Click</option>
+                        <option value="payme">Payme</option>
+                        <option value="transfer">Перевод</option>
+                    </select>
+                    <textarea v-model="form.comment" rows="2" placeholder="Комментарий"
+                              class="w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm"></textarea>
+                </div>
+
+                <div class="bg-ink-50 rounded-xl p-4 text-sm">
+                    <div class="flex items-center justify-between">
+                        <span class="text-ink-500">Subtotal</span>
+                        <span>{{ fmt(preview?.subtotal) }}</span>
+                    </div>
+                    <div v-if="preview?.cartDiscountAmount" class="flex items-center justify-between text-olive-500 mt-1">
+                        <span>Скидка {{ preview?.cartDiscountPercent }}%</span>
+                        <span>−{{ fmt(preview?.cartDiscountAmount) }}</span>
+                    </div>
+                    <div class="flex items-center justify-between font-display font-bold text-base mt-2 pt-2 border-t border-ink-200">
+                        <span>Итого</span>
+                        <span>{{ fmt(preview?.total) }}</span>
+                    </div>
+                    <div v-if="previewing" class="text-[11px] text-ink-400 mt-1">Пересчёт…</div>
+                </div>
+            </div>
+        </div>
+
+        <template #footer>
+            <Button label="Отмена" severity="secondary" outlined @click="emit('update:visible', false)" />
+            <Button :label="saving ? 'Сохранение…' : (prefill?.requestId ? 'Создать заказ' : 'Создать')"
+                    :disabled="saving" icon="pi pi-check" @click="save" />
+        </template>
+    </Dialog>
+</template>

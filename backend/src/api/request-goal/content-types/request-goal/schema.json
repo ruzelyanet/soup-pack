@@ -1,0 +1,12 @@
+{
+  "kind": "collectionType",
+  "collectionName": "request_goals",
+  "info": { "singularName": "request-goal", "pluralName": "request-goals", "displayName": "Цель колонки" },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "text":     { "type": "string", "required": true },
+    "position": { "type": "integer", "default": 0 },
+    "column":   { "type": "relation", "relation": "manyToOne", "target": "api::request-column.request-column", "inversedBy": "goals" },
+    "states":   { "type": "relation", "relation": "oneToMany", "target": "api::request-goal-state.request-goal-state", "mappedBy": "goal" }
+  }
+}

@@ -1,0 +1,15 @@
+{
+    "kind": "collectionType",
+    "collectionName": "discount_events",
+    "info": { "singularName": "discount-event", "pluralName": "discount-events", "displayName": "Событие скидки" },
+    "options": { "draftAndPublish": false },
+    "attributes": {
+        "type":        { "type": "enumeration", "enum": ["created", "updated", "status_changed", "version_created", "duplicated"], "required": true },
+        "fromStatus":  { "type": "string" },
+        "toStatus":    { "type": "string" },
+        "payload":     { "type": "json" },
+        "comment":     { "type": "text" },
+        "discount":    { "type": "relation", "relation": "manyToOne", "target": "api::discount.discount", "inversedBy": "events" },
+        "employee":    { "type": "relation", "relation": "manyToOne", "target": "api::employee.employee" }
+    }
+}

@@ -1,0 +1,20 @@
+{
+  "kind": "collectionType",
+  "collectionName": "products",
+  "info": { "singularName": "product", "pluralName": "products", "displayName": "Продукт" },
+  "options": { "draftAndPublish": true },
+  "attributes": {
+    "name":        { "type": "string", "required": true },
+    "slug":        { "type": "uid", "targetField": "name" },
+    "description": { "type": "text" },
+    "composition": { "type": "json" },
+    "weight":      { "type": "integer" },
+    "price":       { "type": "decimal", "required": true },
+    "available":   { "type": "boolean", "default": true },
+    "tags":        { "type": "json" },
+    "image":       { "type": "media", "multiple": false, "allowedTypes": ["images"] },
+    "gallery":     { "type": "media", "multiple": true, "allowedTypes": ["images"] },
+    "category":    { "type": "relation", "relation": "manyToOne", "target": "api::category.category", "inversedBy": "products" },
+    "prices":      { "type": "relation", "relation": "oneToMany", "target": "api::price.price", "mappedBy": "product" }
+  }
+}

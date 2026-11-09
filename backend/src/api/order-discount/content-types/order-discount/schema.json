@@ -1,0 +1,18 @@
+{
+    "kind": "collectionType",
+    "collectionName": "order_discounts",
+    "info": {
+        "singularName": "order-discount",
+        "pluralName": "order-discounts",
+        "displayName": "Применённая скидка в заказе"
+    },
+    "options": { "draftAndPublish": false },
+    "attributes": {
+        "order":           { "type": "relation", "relation": "manyToOne", "target": "api::order.order" },
+        "discount":        { "type": "relation", "relation": "manyToOne", "target": "api::discount.discount" },
+        "discountVersion": { "type": "integer" },
+        "level":            { "type": "enumeration", "enum": ["line", "set", "order"] },
+        "lineKey":          { "type": "string" },
+        "amount":           { "type": "integer", "required": true }
+    }
+}

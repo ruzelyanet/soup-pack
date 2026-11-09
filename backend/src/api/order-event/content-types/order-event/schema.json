@@ -1,0 +1,13 @@
+{
+  "kind": "collectionType",
+  "collectionName": "order_events",
+  "info": { "singularName": "order-event", "pluralName": "order-events", "displayName": "Событие заказа" },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "kind":    { "type": "string", "required": true },
+    "payload": { "type": "json" },
+    "note":    { "type": "text" },
+    "order":   { "type": "relation", "relation": "manyToOne", "target": "api::order.order", "inversedBy": "events" },
+    "actor":   { "type": "relation", "relation": "manyToOne", "target": "api::employee.employee" }
+  }
+}
