@@ -8,3 +8,4 @@ backend/.cache
 backend/.tmp
 backend/build
 backend/types/generated
+.ops-secrets
