@@ -9,3 +9,4 @@ backend/.tmp
 backend/build
 backend/types/generated
 .ops-secrets
+for-you.txt

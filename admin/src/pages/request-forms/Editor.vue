@@ -51,7 +51,7 @@ const publicUrl = computed(() => {
 })
 
 const curlExample = computed(() => {
-    const apiBase = (import.meta.env.VITE_API_URL as string | undefined) || 'http://localhost:1337/api'
+    const apiBase = (import.meta.env.VITE_API_URL as string | undefined) || 'http://localhost:1337'
     const example = JSON.stringify({
         name: 'Алишер',
         phone: '+998 90 123 45 67',

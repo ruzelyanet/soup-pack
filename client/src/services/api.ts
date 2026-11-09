@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:1337/api'
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:1337'
 const API_TOKEN = import.meta.env.VITE_API_TOKEN || ''
 
 /** Корень Strapi без `/api` — для абсолютных ссылок на медиа. */

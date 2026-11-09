@@ -68,7 +68,7 @@ export function startSse(handlers: RealtimeHandlers): () => void {
         if (stopped) return
         handlers.onStatus('connecting')
         try {
-            await fetchEventSource(SERVER_URL + '/api/staff/events', {
+            await fetchEventSource(SERVER_URL + '/staff/events', {
                 signal: ctrl.signal,
                 openWhenHidden: true,
                 headers: auth.token ? { Authorization: `Bearer ${auth.token}` } : {},
