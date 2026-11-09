@@ -5,7 +5,7 @@ import { useAuth, type StaffRole } from '@/stores/auth'
 type Meta = { roles?: StaffRole[] }
 
 const router = createRouter({
-    history: createWebHistory('/admin/'),
+    history: createWebHistory(),
     routes: [
         { path: '/login', name: 'login', component: () => import('@/pages/LoginPage.vue'), meta: { public: true } },
         {
