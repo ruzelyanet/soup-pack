@@ -122,7 +122,8 @@ async function save() {
         if (edit.value.documentId) {
             saved = await OrderSets.update(edit.value.documentId, data as any)
         } else {
-            saved = await OrderSets.create({ ...data, publishedAt: new Date().toISOString() } as any)
+            // Создаём как черновик — публикуется вручную из карточки набора.
+            saved = await OrderSets.create(data as any)
         }
         emit('saved', saved)
         emit('update:visible', false)
