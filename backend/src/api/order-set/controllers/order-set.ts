@@ -14,7 +14,20 @@ export default factories.createCoreController('api::order-set.order-set', ({ str
     },
     async findOne(ctx: any) {
         // @ts-ignore
-        const { data, meta } = await super.findOne(ctx)
+        const res = await super.findOne(ctx)
+        // В Strapi 5 findOne по умолчанию ищет только published. У draft-записей
+        // (например после unpublish) результат = null → для staff-контекста
+        // (is-staff policy пропустила без auth) достаём draft явно.
+        let data = res?.data ?? null
+        const meta = res?.meta
+        if (!data) {
+            const documentId = ctx.params.id
+            data = await strapi.documents('api::order-set.order-set' as any).findOne({
+                documentId,
+                populate: ctx.query?.populate,
+                status: 'draft',
+            })
+        }
         if (data?.id) {
             const { orderSets } = await strapi.service('api::price.pricing').catalogPricing({ orderSetIds: [data.id] })
             data.pricing = orderSets[data.id] || null
