@@ -158,9 +158,9 @@ function openCard(row: OrderSet) {
                         </div>
                     </template>
                 </Column>
-                <Column header="Статус" style="width: 140px">
+                <Column header="Статус" style="width: 170px">
                     <template #body="{ data }">
-                        <span class="rounded-full px-3 py-1 text-xs font-semibold"
+                        <span class="inline-block whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold"
                               :class="data.publishedAt ? 'bg-olive-500/15 text-olive-600' : 'bg-yellow-500/15 text-yellow-700'">
                             {{ data.publishedAt ? 'Опубликован' : 'Не опубликован' }}
                         </span>

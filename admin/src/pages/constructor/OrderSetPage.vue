@@ -163,11 +163,11 @@ async function togglePublish() {
             <Button icon="pi pi-chevron-left" text @click="router.back()" aria-label="Назад" />
             <h1 class="m-0 text-2xl font-black">{{ set?.name || 'Набор' }}</h1>
             <div class="flex-1"></div>
-            <span v-if="set" class="rounded-full px-3 py-1 text-xs font-semibold"
+            <span v-if="set" class="inline-block whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold"
                   :class="set.publishedAt ? 'bg-olive-500/15 text-olive-600' : 'bg-yellow-500/15 text-yellow-700'">
                 {{ set.publishedAt ? 'Опубликован' : 'Не опубликован' }}
             </span>
-            <span v-if="set" class="rounded-full px-3 py-1 text-xs font-semibold"
+            <span v-if="set" class="inline-block whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold"
                   :class="set.showInCatalog ? 'bg-ink-100 text-ink-600' : 'bg-ink-100 text-ink-400'">
                 {{ set.showInCatalog ? 'В каталоге' : 'Скрыт в каталоге' }}
             </span>
