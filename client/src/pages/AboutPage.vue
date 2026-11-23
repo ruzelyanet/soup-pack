@@ -27,7 +27,7 @@ const values = [
         </header>
 
         <!-- Hero -->
-        <section class="relative mx-4 rounded-[26px] overflow-hidden bg-ink text-deepink p-6 pt-8">
+        <section class="relative mx-4 rounded-[26px] overflow-hidden bg-deep text-deepink p-6 pt-8">
             <div class="absolute -right-10 -top-10 size-48 rounded-full bg-acc/40 blur-3xl"></div>
             <div class="relative flex flex-col gap-3">
                 <div class="flex items-center gap-2.5">

@@ -123,11 +123,11 @@ const discountCards = computed(() => {
                 <div class="flex-1 min-w-0 py-3 pr-3 flex flex-col gap-1.5">
                     <div class="flex items-center gap-2">
                         <span v-if="card.kind === 'set'"
-                              class="bg-ink text-btr font-extrabold text-[10px] tracking-wider uppercase px-2 py-0.5 rounded-full shrink-0">
+                              class="bg-deep text-btr font-extrabold text-[10px] tracking-wider uppercase px-2 py-0.5 rounded-full shrink-0">
                             Набор
                         </span>
                         <span v-else-if="card.tags?.includes('хит')"
-                              class="bg-ink text-btr font-extrabold text-[10px] tracking-wider uppercase px-2 py-0.5 rounded-full shrink-0">
+                              class="bg-deep text-btr font-extrabold text-[10px] tracking-wider uppercase px-2 py-0.5 rounded-full shrink-0">
                             ХИТ
                         </span>
                     </div>

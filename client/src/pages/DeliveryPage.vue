@@ -156,7 +156,7 @@ const rules = [
 
         <!-- Контакты -->
         <section class="px-4 pt-8">
-            <div class="bg-ink text-deepink rounded-[22px] p-5 flex flex-col gap-3">
+            <div class="bg-deep text-deepink rounded-[22px] p-5 flex flex-col gap-3">
                 <div class="text-[11px] font-extrabold uppercase tracking-wider text-btr">Остались вопросы</div>
                 <a v-if="catalog.contact.phone" :href="`tel:${catalog.phoneTel}`"
                    class="flex items-center gap-3 text-deepink no-underline">

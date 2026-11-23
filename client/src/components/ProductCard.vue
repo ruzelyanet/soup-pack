@@ -75,7 +75,7 @@ function dec() {
         >
             <!-- ХИТ бейдж -->
             <span v-if="product.tags?.includes('хит')"
-                  class="absolute top-2.5 left-2.5 bg-ink text-btr font-extrabold text-[10px] tracking-wider px-2 py-1 rounded-full z-10">
+                  class="absolute top-2.5 left-2.5 bg-deep text-btr font-extrabold text-[10px] tracking-wider px-2 py-1 rounded-full z-10">
                 ХИТ
             </span>
 

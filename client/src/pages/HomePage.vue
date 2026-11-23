@@ -114,14 +114,14 @@ function fmt(v: number) {
                 <component v-for="b in catalog.banners" :key="b.id"
                            :is="b.linkUrl ? 'a' : 'div'"
                            :href="b.linkUrl || undefined"
-                           class="relative block w-[330px] h-[190px] rounded-[28px] overflow-hidden bg-ink text-deepink no-underline">
+                           class="relative block w-[330px] h-[190px] rounded-[28px] overflow-hidden bg-deep text-deepink no-underline">
                     <!-- Фон: загруженная картинка или градиент -->
                     <img v-if="b.image?.url" :src="mediaUrl(b.image.url)" :alt="b.title"
                          class="absolute inset-0 w-full h-full object-cover" />
-                    <div v-else class="absolute inset-0 bg-gradient-to-br from-acc to-ink"></div>
+                    <div v-else class="absolute inset-0 bg-gradient-to-br from-acc to-deep"></div>
                     <!-- Тёмная подложка для читаемости текста поверх изображения -->
                     <div v-if="b.image?.url"
-                         class="absolute inset-0 bg-gradient-to-r from-ink/80 via-ink/40 to-transparent"></div>
+                         class="absolute inset-0 bg-gradient-to-r from-deep/80 via-deep/40 to-transparent"></div>
                     <!-- Текст -->
                     <div class="absolute left-5 top-5 w-[220px] flex flex-col gap-2 z-10">
                         <span class="font-display font-black text-[21px] leading-[1.05]">
@@ -158,7 +158,7 @@ function fmt(v: number) {
 
         <!-- Не авторизован — предложение войти, чтобы повторить заказ -->
         <RouterLink v-else-if="!auth.isAuthed" to="/login"
-                    class="flex items-center gap-3 bg-ink text-deepink rounded-[20px] px-3.5 py-3">
+                    class="flex items-center gap-3 bg-deep text-deepink rounded-[20px] px-3.5 py-3">
             <span class="size-10 rounded-full bg-acc/20 text-acct flex items-center justify-center shrink-0">
                 <Icon name="user" :size="20" />
             </span>

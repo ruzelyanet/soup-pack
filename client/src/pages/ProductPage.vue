@@ -127,7 +127,7 @@ function addToCart() {
         <section class="pt-5 px-4 flex flex-col gap-3">
             <div class="flex gap-1.5 flex-wrap">
                 <span v-if="product.tags?.includes('хит')"
-                      class="bg-ink text-btr font-extrabold text-[11px] tracking-wider px-2.5 py-1.5 rounded-full">ХИТ</span>
+                      class="bg-deep text-btr font-extrabold text-[11px] tracking-wider px-2.5 py-1.5 rounded-full">ХИТ</span>
                 <span v-if="hasDiscount"
                       class="bg-acc text-white font-extrabold text-[11px] px-2.5 py-1.5 rounded-full">
                     −{{ pricing?.discountPercent }}%

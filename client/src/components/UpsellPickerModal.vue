@@ -169,7 +169,7 @@ const sortedItems = computed(() =>
                     <div class="flex-1 flex flex-col gap-0.5 min-w-0">
                         <div class="flex items-center gap-1.5 flex-wrap">
                             <span v-if="p.tags?.includes('хит')"
-                                  class="bg-ink text-btr font-extrabold text-[9px] tracking-wider px-1.5 py-0.5 rounded-full">ХИТ</span>
+                                  class="bg-deep text-btr font-extrabold text-[9px] tracking-wider px-1.5 py-0.5 rounded-full">ХИТ</span>
                             <span v-if="(p as any).pricing?.discountPercent"
                                   class="bg-acc text-white font-extrabold text-[10px] px-2 py-0.5 rounded-full">
                                 −{{ (p as any).pricing.discountPercent }}%
