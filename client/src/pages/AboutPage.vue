@@ -35,7 +35,7 @@ const values = [
                         SP
                     </div>
                     <div class="font-display font-black text-[22px] tracking-tight">
-                        SOUP <span class="text-acct">PUCK</span>
+                        SOUP-<span class="text-acct">PACK</span>
                     </div>
                 </div>
                 <h2 class="m-0 font-display font-black text-[28px] leading-tight">

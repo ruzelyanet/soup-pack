@@ -62,7 +62,7 @@ function fmt(v: number) {
             <div class="flex items-center gap-2 min-h-11 text-ink min-w-0">
                 <BrandLogo :size="24" class="text-acc shrink-0" />
                 <span class="font-display font-black tracking-tight text-[16px] leading-none shrink-0">
-                    SOUP <span class="text-acc">PUCK</span>
+                    SOUP-<span class="text-acc">PACK</span>
                 </span>
                 <span class="h-4 w-px bg-ln2 shrink-0"></span>
                 <span class="flex items-center gap-1 min-w-0 text-ink">
