@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { PAGINATOR_TEMPLATE, PAGINATOR_REPORT, PAGE_SIZE_OPTIONS, DEFAULT_PAGE_SIZE as PAGE_SIZE } from '@/utils/paginator'
 import AppTopbar from '@/components/AppTopbar.vue'
 import ImageUploader from '@/components/ImageUploader.vue'
@@ -9,6 +10,7 @@ import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
+import Drawer from 'primevue/drawer'
 import DatePicker from 'primevue/datepicker'
 import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
@@ -50,7 +52,7 @@ async function reload() {
             // populate с image, чтобы показать превью продуктов в наборе.
             OrderSets.listPaged({
                 populate: { items: { populate: { product: { populate: ['image'] } } }, banner: true },
-                sort: 'name:asc',
+                sort: 'createdAt:desc',
                 'pagination[page]': page.value + 1,
                 'pagination[pageSize]': pageSize.value,
             }),
@@ -73,6 +75,17 @@ watch([page, pageSize], reload)
 
 function fmt(v: number) {
     return new Intl.NumberFormat('ru-RU').format(v) + ' сум'
+}
+
+function fmtDate(v: string | undefined) {
+    if (!v) return ''
+    const d = new Date(v)
+    return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
+
+const router = useRouter()
+function openCard(row: OrderSet) {
+    router.push({ name: 'set-card', params: { documentId: row.documentId } })
 }
 
 function openNew() {
@@ -283,17 +296,29 @@ async function remove(row: OrderSet) {
                         </span>
                     </template>
                 </Column>
-                <Column style="width: 60px">
+                <Column header="Создан" style="width: 130px">
                     <template #body="{ data }">
-                        <Button icon="pi pi-trash" text severity="danger" @click.stop="remove(data)" />
+                        <div class="text-xs text-ink-500">{{ fmtDate(data.createdAt) }}</div>
+                    </template>
+                </Column>
+                <Column style="width: 110px">
+                    <template #body="{ data }">
+                        <div class="flex gap-1">
+                            <Button icon="pi pi-chart-bar" text severity="secondary"
+                                    aria-label="Статистика и состав"
+                                    @click.stop="openCard(data)" />
+                            <Button icon="pi pi-trash" text severity="danger"
+                                    @click.stop="remove(data)" />
+                        </div>
                     </template>
                 </Column>
             </DataTable>
         </div>
     </div>
 
-    <Dialog v-model:visible="dialog" modal dismissableMask :header="edit.documentId ? 'Редактировать набор' : 'Новый набор'"
-            :style="{ width: '720px' }">
+    <Drawer v-model:visible="dialog" position="right"
+            :header="edit.documentId ? 'Редактировать набор' : 'Новый набор'"
+            :pt="{ root: { class: '!w-full md:!w-1/2 md:!min-w-[640px]' }, content: { class: 'p-5' } }">
         <div class="space-y-5">
             <div class="grid grid-cols-2 gap-4">
                 <div>
@@ -389,10 +414,12 @@ async function remove(row: OrderSet) {
         </div>
 
         <template #footer>
-            <Button label="Отмена" severity="secondary" outlined @click="dialog = false" />
-            <Button label="Сохранить" severity="primary" @click="save" />
+            <div class="flex justify-end gap-2 w-full">
+                <Button label="Отмена" severity="secondary" outlined @click="dialog = false" />
+                <Button label="Сохранить" severity="primary" @click="save" />
+            </div>
         </template>
-    </Dialog>
+    </Drawer>
 
     <!-- Модалка выбора товаров в набор -->
     <Dialog v-model:visible="pickerDialog" modal dismissableMask

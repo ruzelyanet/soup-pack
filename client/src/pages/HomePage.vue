@@ -262,7 +262,7 @@ function fmt(v: number) {
 
     <!-- Why puck -->
     <section class="pt-6 px-4 flex flex-col gap-3.5">
-        <h2 class="m-0 font-display font-black text-[24px]">Почему шайба</h2>
+        <h2 class="m-0 font-display font-black text-[24px]">Почему soup-pack</h2>
         <ul class="grid grid-cols-2 gap-2.5 list-none m-0 p-0">
             <li v-for="f in features" :key="f.text"
                 class="bg-sf rounded-[20px] p-4 flex flex-col gap-2.5">

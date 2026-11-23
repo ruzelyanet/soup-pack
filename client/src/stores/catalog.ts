@@ -42,6 +42,7 @@ export const useCatalog = defineStore('catalog', () => {
                 })),
                 api.get('/order-sets' + qs({
                     populate: { items: { populate: { product: { populate: ['image'] } } }, banner: true },
+                    sort: 'createdAt:desc',
                     'filters[showInCatalog][$eq]': true,
                     'pagination[pageSize]': 50,
                 })),

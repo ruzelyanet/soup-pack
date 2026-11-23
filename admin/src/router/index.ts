@@ -20,6 +20,7 @@ const router = createRouter({
                 { path: 'catalog/products',   name: 'products',      component: () => import('@/pages/catalog/Products.vue'), meta: { roles: ['manager'] } satisfies Meta },
                 { path: 'catalog/products/:id', name: 'product',     component: () => import('@/pages/catalog/ProductEditor.vue'), meta: { roles: ['manager'] } satisfies Meta },
                 { path: 'catalog/sets',       name: 'sets',          component: () => import('@/pages/constructor/OrderSets.vue'), meta: { roles: ['manager'] } satisfies Meta },
+                { path: 'catalog/sets/:documentId', name: 'set-card',  component: () => import('@/pages/constructor/OrderSetPage.vue'), meta: { roles: ['manager'] } satisfies Meta },
 
                 { path: 'requests',           name: 'requests',      component: () => import('@/pages/requests/Board.vue'), meta: { roles: ['manager', 'duty'] } satisfies Meta },
                 { path: 'requests/all',       name: 'requests-all',  component: () => import('@/pages/requests/AllRequests.vue'), meta: { roles: ['manager', 'duty'] } satisfies Meta },
