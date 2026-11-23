@@ -43,12 +43,31 @@ export default factories.createCoreController('api::order-set.order-set', ({ str
     },
     async publish(ctx: any) {
         const documentId = ctx.params.id
-        const result = await strapi.documents('api::order-set.order-set' as any).publish({ documentId })
-        return { data: result }
+        try {
+            const result = await strapi.documents('api::order-set.order-set' as any).publish({ documentId })
+            return { data: result }
+        } catch (err: any) {
+            strapi.log.error('[order-set.publish]', { documentId, err: err?.message, stack: err?.stack })
+            return ctx.throw(500, err?.message || 'publish failed')
+        }
     },
     async unpublish(ctx: any) {
         const documentId = ctx.params.id
-        const result = await strapi.documents('api::order-set.order-set' as any).unpublish({ documentId })
-        return { data: result }
+        try {
+            // В Strapi 5 unpublish падает, если документа нет или он уже draft;
+            // сначала проверим наличие published-версии.
+            const existing = await strapi.documents('api::order-set.order-set' as any).findOne({
+                documentId,
+                status: 'published',
+            })
+            if (!existing) {
+                return { data: { documentId, alreadyDraft: true } }
+            }
+            const result = await strapi.documents('api::order-set.order-set' as any).unpublish({ documentId })
+            return { data: result }
+        } catch (err: any) {
+            strapi.log.error('[order-set.unpublish]', { documentId, err: err?.message, stack: err?.stack })
+            return ctx.throw(500, err?.message || 'unpublish failed')
+        }
     },
 }))
