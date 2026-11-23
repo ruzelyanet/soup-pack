@@ -2,14 +2,19 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppTopbar from '@/components/AppTopbar.vue'
-import { OrderSets, Orders, type OrderSet, type Order } from '@/services/resources'
+import { OrderSets, Orders, Products, type OrderSet, type Order, type Product } from '@/services/resources'
 import { api, mediaUrl } from '@/services/api'
+import OrderSetEditor from './OrderSetEditor.vue'
 import Button from 'primevue/button'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import { useToast } from 'primevue/usetoast'
+import { useConfirm } from 'primevue/useconfirm'
 
 const toast = useToast()
+const confirmSvc = useConfirm()
+const products = ref<Product[]>([])
+const editorOpen = ref(false)
 
 const route = useRoute()
 const router = useRouter()
@@ -39,12 +44,17 @@ async function load() {
     err.value = null
     try {
         const documentId = String(route.params.documentId)
-        set.value = await OrderSets.get(documentId, {
-            populate: { items: { populate: { product: { populate: ['image'] } } }, banner: true },
-        })
-        // Orders where items[].orderSetId == set.id. Берём побольше — агрегируем клиентом.
+        const [s, prods] = await Promise.all([
+            OrderSets.get(documentId, {
+                populate: { items: { populate: { product: { populate: ['image'] } } }, banner: true },
+            }),
+            products.value.length ? Promise.resolve(products.value)
+                                  : Products.list({ populate: ['image'], sort: 'name:asc' }),
+        ])
+        set.value = s
+        products.value = prods
         const list = await Orders.list({
-            'filters[items][orderSetId][$eq]': set.value.id,
+            'filters[items][orderSetId][$eq]': s.id,
             populate: ['items'],
             sort: 'createdAt:desc',
             'pagination[pageSize]': 500,
@@ -54,6 +64,30 @@ async function load() {
         err.value = e?.response?.data?.error?.message || e.message || 'Не удалось загрузить набор'
     } finally {
         loading.value = false
+    }
+}
+
+function askDelete() {
+    if (!set.value) return
+    confirmSvc.require({
+        message: `Удалить набор «${set.value.name}»?`,
+        header: 'Удаление',
+        icon: 'pi pi-exclamation-triangle',
+        acceptLabel: 'Удалить',
+        rejectLabel: 'Отмена',
+        acceptClass: 'p-button-danger',
+        accept: doDelete,
+    })
+}
+async function doDelete() {
+    if (!set.value) return
+    try {
+        await OrderSets.remove(set.value.documentId)
+        toast.add({ severity: 'success', summary: 'Удалён', life: 1800 })
+        router.push({ name: 'sets' })
+    } catch (e: any) {
+        toast.add({ severity: 'error', summary: 'Ошибка',
+            detail: e?.response?.data?.error?.message || e?.message, life: 3500 })
     }
 }
 onMounted(load)
@@ -143,6 +177,10 @@ async function togglePublish() {
                     :severity="set.publishedAt ? 'secondary' : 'primary'"
                     :loading="publishing"
                     @click="togglePublish" />
+            <Button v-if="set" icon="pi pi-pencil" label="Редактировать" severity="secondary"
+                    @click="editorOpen = true" />
+            <Button v-if="set" icon="pi pi-trash" text severity="danger"
+                    aria-label="Удалить" @click="askDelete" />
         </div>
 
         <div v-if="loading" class="text-ink-500">Загрузка…</div>
@@ -249,4 +287,6 @@ async function togglePublish() {
             </div>
         </template>
     </div>
+
+    <OrderSetEditor v-model:visible="editorOpen" :set="set" :products="products" @saved="load" />
 </template>
