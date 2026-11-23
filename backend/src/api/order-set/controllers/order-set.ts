@@ -2,6 +2,16 @@ import { factories } from '@strapi/strapi'
 
 /** Переопределяем find/findOne чтобы приклеить `pricing` для набора (цена + скидка набора). */
 export default factories.createCoreController('api::order-set.order-set', ({ strapi }) => ({
+    /** Гарантированно создаём набор как ЧЕРНОВИК — публикация делается явно из карточки. */
+    async create(ctx: any) {
+        const data = (ctx.request.body as any)?.data
+        const created = await strapi.documents('api::order-set.order-set' as any).create({
+            data,
+            status: 'draft',
+            populate: (ctx.query as any)?.populate,
+        })
+        return { data: created }
+    },
     async find(ctx: any) {
         // @ts-ignore
         const { data, meta } = await super.find(ctx)
