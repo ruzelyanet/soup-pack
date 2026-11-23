@@ -165,7 +165,7 @@ async function togglePublish() {
             <div class="flex-1"></div>
             <span v-if="set" class="rounded-full px-3 py-1 text-xs font-semibold"
                   :class="set.publishedAt ? 'bg-olive-500/15 text-olive-600' : 'bg-yellow-500/15 text-yellow-700'">
-                {{ set.publishedAt ? 'Опубликован' : 'Черновик' }}
+                {{ set.publishedAt ? 'Опубликован' : 'Не опубликован' }}
             </span>
             <span v-if="set" class="rounded-full px-3 py-1 text-xs font-semibold"
                   :class="set.showInCatalog ? 'bg-ink-100 text-ink-600' : 'bg-ink-100 text-ink-400'">

@@ -162,7 +162,7 @@ function openCard(row: OrderSet) {
                     <template #body="{ data }">
                         <span class="rounded-full px-3 py-1 text-xs font-semibold"
                               :class="data.publishedAt ? 'bg-olive-500/15 text-olive-600' : 'bg-yellow-500/15 text-yellow-700'">
-                            {{ data.publishedAt ? 'Опубликован' : 'Черновик' }}
+                            {{ data.publishedAt ? 'Опубликован' : 'Не опубликован' }}
                         </span>
                     </template>
                 </Column>
