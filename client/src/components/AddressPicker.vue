@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, ref, watch } from 'vue'
-import Dialog from 'primevue/dialog'
+import Drawer from 'primevue/drawer'
 
 /* Яндекс.Карты 2.1 — грузим скрипт один раз по первой необходимости. */
 const YANDEX_API_KEY = import.meta.env.VITE_YANDEX_MAPS_KEY as string | undefined
@@ -368,112 +368,114 @@ onBeforeUnmount(() => {
             Точка сохранена: {{ lat.toFixed(5) }}, {{ lng.toFixed(5) }}
         </p>
 
-        <Dialog
+        <Drawer
             v-model:visible="open"
-            modal
-            :show-header="false"
-            :style="{ width: '860px', maxWidth: '95vw' }"
-            :pt="{ content: { class: 'p-0 overflow-visible' }, root: { class: 'rounded-3xl overflow-hidden' } }"
+            position="bottom"
+            :show-close-icon="false"
+            :pt="{
+                root: { class: '!h-[92vh] md:!h-[85vh] !max-h-[720px] rounded-t-3xl md:!max-w-[880px] md:!mx-auto' },
+                content: { class: '!p-0 !h-full' },
+                header: { class: '!hidden' },
+            }"
         >
-            <div class="relative bg-sf">
-                <!-- Шапка -->
-                <div class="px-6 pt-6 pr-16">
-                    <h2 class="font-display font-extrabold text-[22px] text-ink leading-tight">
+            <div class="flex flex-col h-full bg-sf">
+                <!-- Шапка (sticky) -->
+                <div class="shrink-0 relative px-5 pt-5 pb-3 pr-16">
+                    <!-- хэндл свайпа -->
+                    <div class="absolute top-2 left-1/2 -translate-x-1/2 w-10 h-1 rounded-full bg-mut/40 md:hidden"></div>
+                    <h2 class="font-display font-extrabold text-[20px] md:text-[22px] text-ink leading-tight">
                         Выберите адрес доставки
                     </h2>
                     <p class="mt-1 text-sm text-mut">Это нужно, чтобы увидеть актуальное меню и доставить вовремя.</p>
-                </div>
-                <button type="button"
-                        class="absolute top-5 right-5 size-10 rounded-full bg-sf2 flex items-center justify-center text-ink hover:bg-ln"
-                        aria-label="Закрыть"
-                        @click="open = false">
-                    <span class="pi pi-times text-[14px]"></span>
-                </button>
-
-                <!-- Поиск адреса -->
-                <div class="px-6 mt-4">
-                    <div class="relative">
-                        <span class="pi pi-search absolute left-4 top-1/2 -translate-y-1/2 text-mut text-[14px]"></span>
-                        <input
-                            v-model="tempAddress"
-                            :placeholder="geocoding ? 'Определяем адрес…' : 'Поиск адреса'"
-                            class="w-full h-12 rounded-xl border-2 border-acc bg-sf pl-11 pr-11 text-ink font-semibold focus:outline-none"
-                            @keyup.enter="geocodeSearch"
-                        />
-                        <button v-if="tempAddress" type="button"
-                                class="absolute right-3 top-1/2 -translate-y-1/2 size-6 rounded-full bg-mut/40 flex items-center justify-center text-sf hover:bg-mut"
-                                aria-label="Очистить"
-                                @click="clearSearch">
-                            <span class="pi pi-times text-[9px]"></span>
-                        </button>
-                    </div>
-                    <p v-if="geocodeError" class="text-xs text-acc mt-1.5">{{ geocodeError }}</p>
-                </div>
-
-                <!-- Дом / Квартира -->
-                <div class="px-6 mt-3 grid grid-cols-2 gap-3">
-                    <div class="relative">
-                        <label class="absolute left-4 top-2 text-[11px] font-semibold text-mut pointer-events-none">Дом</label>
-                        <input
-                            v-model="tempHouse"
-                            class="w-full h-14 rounded-xl border-2 border-ln2 bg-sf pt-6 pb-2 px-4 text-ink font-bold focus:outline-none focus:border-acc transition"
-                        />
-                    </div>
-                    <div class="relative">
-                        <label class="absolute left-4 top-2 text-[11px] font-semibold text-mut pointer-events-none">Квартира</label>
-                        <input
-                            v-model="tempApt"
-                            class="w-full h-14 rounded-xl border-2 border-ln2 bg-sf pt-6 pb-2 px-4 text-ink font-bold focus:outline-none focus:border-acc transition"
-                        />
-                    </div>
-                </div>
-
-                <!-- Карта -->
-                <div class="relative mt-4 mx-6 rounded-2xl overflow-hidden">
-                    <div ref="mapEl" class="w-full h-[340px]" style="background:#eef1f3"></div>
-
-                    <!-- Маркер один-в-один как у yaponamama: красный круг с белым центром
-                         (chakra-spinner idle = ring), тонкая ножка, круглая тень. -->
-                    <div v-if="!mapError"
-                         class="pointer-events-none absolute top-1/2 left-1/2 z-[500] flex flex-col items-center"
-                         style="transform: translate(-50%, calc(-100% + 2px))">
-                        <!-- Head: внешний красный круг + внутренний белый круг (кольцо) -->
-                        <div class="relative size-8 rounded-full bg-acc shadow-[0_2px_4px_rgba(0,0,0,.35)] flex items-center justify-center">
-                            <!-- Внутренний белый круг (как в идле Chakra spinner) -->
-                            <span v-if="!geocoding" class="size-[14px] rounded-full bg-white"></span>
-                            <!-- Активный Chakra-style spinner во время загрузки -->
-                            <span v-else class="size-[18px] rounded-full border-[3px] border-white/30 border-t-white animate-spin"></span>
-                        </div>
-                        <!-- Stick: тонкая вертикальная ножка -->
-                        <div class="w-[3px] h-[22px] bg-acc"></div>
-                        <!-- Shadow: круглая тень под кончиком -->
-                        <div class="w-[10px] h-[10px] rounded-full bg-black/30 blur-[3px] -mt-1"></div>
-                    </div>
-
-                    <p v-if="mapError"
-                       class="absolute inset-0 z-[1000] bg-sf/95 flex items-center justify-center px-6 text-center text-acc text-sm font-semibold">
-                        {{ mapError }}
-                    </p>
-                    <!-- Таблетка «моя геопозиция» -->
-                    <button
-                        type="button"
-                        :aria-busy="locating"
-                        :disabled="locating || !!mapError"
-                        @click="useMyLocation"
-                        class="absolute bottom-3 left-1/2 -translate-x-1/2 z-[1000] bg-sf rounded-full shadow-lg px-4 h-10 flex items-center gap-2 text-ink font-semibold text-sm hover:bg-sf2 disabled:opacity-70"
-                    >
-                        <span v-if="locating" class="pi pi-spin pi-spinner text-[14px]"></span>
-                        <span v-else class="pi pi-send text-[13px]"></span>
-                        {{ locating ? 'Определяем…' : 'Определение местоположения' }}
+                    <button type="button"
+                            class="absolute top-4 right-4 size-10 rounded-full bg-sf2 flex items-center justify-center text-ink hover:bg-ln"
+                            aria-label="Закрыть"
+                            @click="open = false">
+                        <span class="pi pi-times text-[14px]"></span>
                     </button>
-                    <p v-if="locateError && !mapError"
-                       class="absolute top-3 left-3 right-3 z-[1000] rounded-lg bg-sf/95 text-acc text-xs font-semibold px-3 py-2 shadow">
-                        {{ locateError }}
-                    </p>
                 </div>
 
-                <!-- Сохранить -->
-                <div class="px-6 pb-6 pt-5">
+                <!-- Скроллимая область -->
+                <div class="flex-1 overflow-y-auto px-5 pb-4 space-y-3">
+                    <!-- Поиск адреса -->
+                    <div>
+                        <div class="relative">
+                            <span class="pi pi-search absolute left-4 top-1/2 -translate-y-1/2 text-mut text-[14px]"></span>
+                            <input
+                                v-model="tempAddress"
+                                :placeholder="geocoding ? 'Определяем адрес…' : 'Поиск адреса'"
+                                class="w-full h-12 rounded-xl border-2 border-acc bg-sf pl-11 pr-11 text-ink font-semibold focus:outline-none"
+                                @keyup.enter="geocodeSearch"
+                            />
+                            <button v-if="tempAddress" type="button"
+                                    class="absolute right-3 top-1/2 -translate-y-1/2 size-6 rounded-full bg-mut/40 flex items-center justify-center text-sf hover:bg-mut"
+                                    aria-label="Очистить"
+                                    @click="clearSearch">
+                                <span class="pi pi-times text-[9px]"></span>
+                            </button>
+                        </div>
+                        <p v-if="geocodeError" class="text-xs text-acc mt-1.5">{{ geocodeError }}</p>
+                    </div>
+
+                    <!-- Дом / Квартира -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="relative">
+                            <label class="absolute left-4 top-2 text-[11px] font-semibold text-mut pointer-events-none">Дом</label>
+                            <input
+                                v-model="tempHouse"
+                                class="w-full h-14 rounded-xl border-2 border-ln2 bg-sf pt-6 pb-2 px-4 text-ink font-bold focus:outline-none focus:border-acc transition"
+                            />
+                        </div>
+                        <div class="relative">
+                            <label class="absolute left-4 top-2 text-[11px] font-semibold text-mut pointer-events-none">Квартира</label>
+                            <input
+                                v-model="tempApt"
+                                class="w-full h-14 rounded-xl border-2 border-ln2 bg-sf pt-6 pb-2 px-4 text-ink font-bold focus:outline-none focus:border-acc transition"
+                            />
+                        </div>
+                    </div>
+
+                    <!-- Карта -->
+                    <div class="relative rounded-2xl overflow-hidden">
+                        <div ref="mapEl" class="w-full h-[260px] md:h-[340px]" style="background:#eef1f3"></div>
+
+                        <!-- Маркер: красный круг с белым центром, тонкая ножка, круглая тень. -->
+                        <div v-if="!mapError"
+                             class="pointer-events-none absolute top-1/2 left-1/2 z-[500] flex flex-col items-center"
+                             style="transform: translate(-50%, calc(-100% + 2px))">
+                            <div class="relative size-8 rounded-full bg-acc shadow-[0_2px_4px_rgba(0,0,0,.35)] flex items-center justify-center">
+                                <span v-if="!geocoding" class="size-[14px] rounded-full bg-white"></span>
+                                <span v-else class="size-[18px] rounded-full border-[3px] border-white/30 border-t-white animate-spin"></span>
+                            </div>
+                            <div class="w-[3px] h-[22px] bg-acc"></div>
+                            <div class="w-[10px] h-[10px] rounded-full bg-black/30 blur-[3px] -mt-1"></div>
+                        </div>
+
+                        <p v-if="mapError"
+                           class="absolute inset-0 z-[1000] bg-sf/95 flex items-center justify-center px-6 text-center text-acc text-sm font-semibold">
+                            {{ mapError }}
+                        </p>
+                        <!-- Таблетка «моя геопозиция» -->
+                        <button
+                            type="button"
+                            :aria-busy="locating"
+                            :disabled="locating || !!mapError"
+                            @click="useMyLocation"
+                            class="absolute bottom-3 left-1/2 -translate-x-1/2 z-[1000] bg-sf rounded-full shadow-lg px-4 h-10 flex items-center gap-2 text-ink font-semibold text-sm hover:bg-sf2 disabled:opacity-70"
+                        >
+                            <span v-if="locating" class="pi pi-spin pi-spinner text-[14px]"></span>
+                            <span v-else class="pi pi-send text-[13px]"></span>
+                            {{ locating ? 'Определяем…' : 'Определение местоположения' }}
+                        </button>
+                        <p v-if="locateError && !mapError"
+                           class="absolute top-3 left-3 right-3 z-[1000] rounded-lg bg-sf/95 text-acc text-xs font-semibold px-3 py-2 shadow">
+                            {{ locateError }}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Сохранить (sticky bottom) -->
+                <div class="shrink-0 px-5 py-4 border-t border-ln2 bg-sf" style="padding-bottom: calc(1rem + env(safe-area-inset-bottom))">
                     <button
                         type="button"
                         class="w-full h-[56px] rounded-2xl bg-acc hover:bg-acct text-white font-extrabold text-[16px]"
@@ -483,6 +485,6 @@ onBeforeUnmount(() => {
                     </button>
                 </div>
             </div>
-        </Dialog>
+        </Drawer>
     </div>
 </template>
