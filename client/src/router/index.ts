@@ -21,6 +21,7 @@ const router = createRouter({
                 { path: 'login',          name: 'login',    component: () => import('@/pages/LoginPage.vue'),    meta: { hideBottom: true } },
                 { path: 'order/:code',    name: 'order',    component: () => import('@/pages/OrderPage.vue') },
                 { path: 'about',          name: 'about',       component: () => import('@/pages/AboutPage.vue') },
+                { path: 'chef',           name: 'chef',        component: () => import('@/pages/ChefPage.vue') },
                 { path: 'delivery',       name: 'delivery',    component: () => import('@/pages/DeliveryPage.vue') },
                 { path: 'discounts',      name: 'discounts',   component: () => import('@/pages/DiscountsPage.vue') },
                 { path: 'promotions',     redirect: '/discounts' },

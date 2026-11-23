@@ -56,28 +56,28 @@ const values = [
 
         <!-- Chef -->
         <section class="px-4 pt-8">
-            <div class="bg-sf rounded-[22px] p-5 flex gap-4 items-start">
-                <div class="shrink-0 size-20 rounded-full bg-tint-tom flex items-center justify-center text-ink font-display font-black text-[26px]">
-                    АА
-                </div>
-                <div class="flex-1 min-w-0">
-                    <div class="text-[11px] font-extrabold uppercase tracking-wider text-acct">
-                        Технолог шеф-повар
-                    </div>
-                    <div class="mt-1 font-display font-extrabold text-[20px] leading-tight">
-                        Азиз Алиев
-                    </div>
-                    <p class="m-0 mt-2 text-[14px] text-mut leading-relaxed">
-                        15 лет на кухнях ташкентских ресторанов и 3 года в R&amp;D готовой еды.
-                        Отвечает за рецептуру, калибровку порций и контроль закупок. Без его
-                        согласия в наш каталог не попадает ни один суп.
-                    </p>
-                    <div class="mt-3 bg-sf2 rounded-xl px-3 py-2 text-[13px] italic text-ink">
-                        «Шайба — это ограничение, но ограничение делает рецепт честнее:
-                        нет места лишнему, остаётся только то, что действительно вкусно».
+            <router-link to="/chef" class="block bg-sf rounded-[22px] overflow-hidden no-underline text-ink">
+                <div class="flex gap-4 items-start p-5">
+                    <img src="/chef/photo-09.jpeg" alt="Мирзахаким Газиев"
+                         class="shrink-0 size-20 rounded-full object-cover" />
+                    <div class="flex-1 min-w-0">
+                        <div class="text-[11px] font-extrabold uppercase tracking-wider text-acct">
+                            Шеф-повар · технолог
+                        </div>
+                        <div class="mt-1 font-display font-extrabold text-[20px] leading-tight">
+                            Мирзахаким Газиев
+                        </div>
+                        <p class="m-0 mt-2 text-[14px] text-mut leading-relaxed">
+                            Представитель кулинарной династии Газиевых. Школа ресторанной сети «Урюк»
+                            в Москве, авторская проработка блюд для меню ташкентских ресторанов.
+                        </p>
                     </div>
                 </div>
-            </div>
+                <div class="px-5 pb-5 flex items-center justify-between text-acct font-semibold text-[14px]">
+                    <span>Больше о шеф-поваре</span>
+                    <Icon name="chevron-right" :size="18" :stroke="2.4" />
+                </div>
+            </router-link>
         </section>
 
         <!-- Values -->
