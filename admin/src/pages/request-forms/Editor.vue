@@ -46,12 +46,12 @@ const fieldTypes: Array<{ value: FormFieldType; label: string }> = [
 ]
 
 const publicUrl = computed(() => {
-    const clientBase = (import.meta.env.VITE_CLIENT_URL as string | undefined) || 'http://localhost:5173'
+    const clientBase = (import.meta.env.VITE_CLIENT_URL as string | undefined) || 'http://localhost:5150'
     return `${clientBase}/f/${form.slug}`
 })
 
 const curlExample = computed(() => {
-    const apiBase = (import.meta.env.VITE_API_URL as string | undefined) || 'http://localhost:1337'
+    const apiBase = (import.meta.env.VITE_API_URL as string | undefined) || 'http://localhost:1437'
     const example = JSON.stringify({
         name: 'Алишер',
         phone: '+998 90 123 45 67',

@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { useAuth } from '@/stores/auth'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:1337'
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:1437'
 
 /** Корень Strapi — для абсолютных ссылок на медиа. */
 export const SERVER_URL = API_URL.replace(/\/api\/?$/, '')
