@@ -31,7 +31,7 @@ export const COMMANDS = [
 ]
 
 export const DEFAULT_GREETING =
-    'Здравствуйте! 👋 Это SOUP PUCK — натуральные супы в формате шайбы 350 г. ' +
+    'Здравствуйте! 👋 Это SOUP PACK — натуральные супы в формате шайбы 350 г. ' +
     'Здесь можно посмотреть каталог и оформить доставку.'
 
 /**
@@ -181,7 +181,7 @@ export class ShopBot {
         await this.api.sendMessage(chatId, t.contactText(c), { reply_markup: mainKeyboard })
         const phone = t.normalizeUzPhone(c.phone)
         // Карточка контакта — по ней в Telegram можно сразу позвонить.
-        if (phone) await this.api.sendContact(chatId, phone, 'SOUP PUCK').catch(() => {})
+        if (phone) await this.api.sendContact(chatId, phone, 'SOUP PACK').catch(() => {})
     }
 
     // ───────────────────────── каталог ─────────────────────────

@@ -195,7 +195,7 @@ onMounted(load)
             <div>
                 <label class="text-xs font-bold uppercase tracking-wider text-ink-400">Приветствие на первом экране</label>
                 <textarea v-model="form.shopBotGreeting" rows="3" maxlength="2000"
-                          placeholder="Здравствуйте! 👋 Это SOUP PUCK — натуральные супы в формате шайбы 350 г. Здесь можно посмотреть каталог и оформить доставку."
+                          placeholder="Здравствуйте! 👋 Это SOUP PACK — натуральные супы в формате шайбы 350 г. Здесь можно посмотреть каталог и оформить доставку."
                           class="mt-1 w-full rounded-xl border border-ink-200 px-4 py-2.5 text-sm focus:outline-none focus:border-ink-900"></textarea>
                 <div class="mt-1 text-xs text-ink-400">
                     Под приветствием бот сам добавит телефон и часы работы из «Контактов магазина» и кнопки категорий.
