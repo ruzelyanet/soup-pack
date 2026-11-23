@@ -5,7 +5,7 @@ import { PAGINATOR_TEMPLATE, PAGINATOR_REPORT, PAGE_SIZE_OPTIONS, DEFAULT_PAGE_S
 import AppTopbar from '@/components/AppTopbar.vue'
 import ImageUploader from '@/components/ImageUploader.vue'
 import { OrderSets, Products, type OrderSet, type OrderSetItem, type Product } from '@/services/resources'
-import { mediaUrl } from '@/services/api'
+import { api, mediaUrl } from '@/services/api'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Button from 'primevue/button'
@@ -86,6 +86,20 @@ function fmtDate(v: string | undefined) {
 const router = useRouter()
 function openCard(row: OrderSet) {
     router.push({ name: 'set-card', params: { documentId: row.documentId } })
+}
+
+async function togglePublish(row: OrderSet) {
+    const path = row.publishedAt
+        ? `/staff/order-sets/${row.documentId}/actions/unpublish`
+        : `/staff/order-sets/${row.documentId}/actions/publish`
+    try {
+        await api.post(path)
+        toast.add({ severity: 'success', summary: row.publishedAt ? 'Снят с публикации' : 'Опубликован', life: 1800 })
+        await reload()
+    } catch (e: any) {
+        toast.add({ severity: 'error', summary: 'Ошибка',
+            detail: e?.response?.data?.error?.message || e?.message, life: 3500 })
+    }
 }
 
 function openNew() {
@@ -195,7 +209,8 @@ async function save() {
         if (edit.value.documentId) {
             await OrderSets.update(edit.value.documentId, data as any)
         } else {
-            await OrderSets.create(data as any)
+            // Новый набор создаём сразу опубликованным — иначе клиент его не увидит.
+            await OrderSets.create({ ...data, publishedAt: new Date().toISOString() } as any)
         }
         dialog.value = false
         toast.add({ severity: 'success', summary: 'Сохранено', life: 1800 })
@@ -288,22 +303,33 @@ async function remove(row: OrderSet) {
                         </div>
                     </template>
                 </Column>
-                <Column header="В каталоге" style="width: 140px">
+                <Column header="Статус" style="width: 140px">
                     <template #body="{ data }">
                         <span class="rounded-full px-3 py-1 text-xs font-semibold"
-                              :class="data.showInCatalog ? 'bg-olive-500/15 text-olive-500' : 'bg-ink-100 text-ink-400'">
+                              :class="data.publishedAt ? 'bg-olive-500/15 text-olive-600' : 'bg-yellow-500/15 text-yellow-700'">
+                            {{ data.publishedAt ? 'Опубликован' : 'Черновик' }}
+                        </span>
+                    </template>
+                </Column>
+                <Column header="В каталоге" style="width: 120px">
+                    <template #body="{ data }">
+                        <span class="text-xs" :class="data.showInCatalog ? 'text-olive-600' : 'text-ink-400'">
                             {{ data.showInCatalog ? 'Показан' : 'Скрыт' }}
                         </span>
                     </template>
                 </Column>
-                <Column header="Создан" style="width: 130px">
+                <Column header="Создан" style="width: 120px">
                     <template #body="{ data }">
                         <div class="text-xs text-ink-500">{{ fmtDate(data.createdAt) }}</div>
                     </template>
                 </Column>
-                <Column style="width: 110px">
+                <Column style="width: 160px">
                     <template #body="{ data }">
                         <div class="flex gap-1">
+                            <Button :icon="data.publishedAt ? 'pi pi-eye-slash' : 'pi pi-globe'"
+                                    text :severity="data.publishedAt ? 'secondary' : 'success'"
+                                    :aria-label="data.publishedAt ? 'Снять с публикации' : 'Опубликовать'"
+                                    @click.stop="togglePublish(data)" />
                             <Button icon="pi pi-chart-bar" text severity="secondary"
                                     aria-label="Статистика и состав"
                                     @click.stop="openCard(data)" />

@@ -3,10 +3,13 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppTopbar from '@/components/AppTopbar.vue'
 import { OrderSets, Orders, type OrderSet, type Order } from '@/services/resources'
-import { mediaUrl } from '@/services/api'
+import { api, mediaUrl } from '@/services/api'
 import Button from 'primevue/button'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
+import { useToast } from 'primevue/usetoast'
+
+const toast = useToast()
 
 const route = useRoute()
 const router = useRouter()
@@ -97,20 +100,49 @@ function itemImg(it: any): string {
 function goOrder(o: Order) {
     router.push({ name: 'order', params: { id: o.id } })
 }
+
+const publishing = ref(false)
+async function togglePublish() {
+    if (!set.value || publishing.value) return
+    publishing.value = true
+    try {
+        const path = set.value.publishedAt
+            ? `/staff/order-sets/${set.value.documentId}/actions/unpublish`
+            : `/staff/order-sets/${set.value.documentId}/actions/publish`
+        await api.post(path)
+        toast.add({ severity: 'success', summary: set.value.publishedAt ? 'Снят с публикации' : 'Опубликован', life: 1800 })
+        await load()
+    } catch (e: any) {
+        toast.add({ severity: 'error', summary: 'Ошибка',
+            detail: e?.response?.data?.error?.message || e?.message, life: 3500 })
+    } finally {
+        publishing.value = false
+    }
+}
 </script>
 
 <template>
     <AppTopbar />
-    <div class="max-w-5xl mx-auto px-6 py-6">
+    <div class="px-6 py-6">
         <!-- Header -->
         <div class="flex items-center gap-3 mb-5">
             <Button icon="pi pi-chevron-left" text @click="router.back()" aria-label="Назад" />
             <h1 class="m-0 text-2xl font-black">{{ set?.name || 'Набор' }}</h1>
             <div class="flex-1"></div>
             <span v-if="set" class="rounded-full px-3 py-1 text-xs font-semibold"
-                  :class="set.showInCatalog ? 'bg-olive-500/15 text-olive-500' : 'bg-ink-100 text-ink-400'">
-                {{ set.showInCatalog ? 'В каталоге' : 'Скрыт' }}
+                  :class="set.publishedAt ? 'bg-olive-500/15 text-olive-600' : 'bg-yellow-500/15 text-yellow-700'">
+                {{ set.publishedAt ? 'Опубликован' : 'Черновик' }}
             </span>
+            <span v-if="set" class="rounded-full px-3 py-1 text-xs font-semibold"
+                  :class="set.showInCatalog ? 'bg-ink-100 text-ink-600' : 'bg-ink-100 text-ink-400'">
+                {{ set.showInCatalog ? 'В каталоге' : 'Скрыт в каталоге' }}
+            </span>
+            <Button v-if="set"
+                    :icon="set.publishedAt ? 'pi pi-eye-slash' : 'pi pi-globe'"
+                    :label="set.publishedAt ? 'Снять с публикации' : 'Опубликовать'"
+                    :severity="set.publishedAt ? 'secondary' : 'primary'"
+                    :loading="publishing"
+                    @click="togglePublish" />
         </div>
 
         <div v-if="loading" class="text-ink-500">Загрузка…</div>

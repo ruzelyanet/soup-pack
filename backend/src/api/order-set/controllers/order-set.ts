@@ -21,4 +21,34 @@ export default factories.createCoreController('api::order-set.order-set', ({ str
         }
         return { data, meta }
     },
+    /** Для staff-эндпоинта: показывать и draft и published (объединяя версии по documentId). */
+    async findAllStatuses(ctx: any) {
+        const q = ctx.query || {}
+        const base = { populate: q.populate, filters: q.filters, sort: q.sort }
+        const docs = strapi.documents('api::order-set.order-set' as any)
+        const [pub, drf] = await Promise.all([
+            docs.findMany({ ...base, status: 'published' }),
+            docs.findMany({ ...base, status: 'draft' }),
+        ])
+        // В v5 draft и published — две версии одного documentId. Берём published, иначе draft.
+        const map = new Map<string, any>()
+        for (const d of drf) map.set(d.documentId, d)
+        for (const d of pub) map.set(d.documentId, d)
+        const data = Array.from(map.values())
+        if (data.length) {
+            const { orderSets } = await strapi.service('api::price.pricing').catalogPricing({ orderSetIds: data.map((d) => d.id) })
+            for (const d of data) d.pricing = orderSets[d.id] || null
+        }
+        return { data, meta: { pagination: { total: data.length } } }
+    },
+    async publish(ctx: any) {
+        const documentId = ctx.params.id
+        const result = await strapi.documents('api::order-set.order-set' as any).publish({ documentId })
+        return { data: result }
+    },
+    async unpublish(ctx: any) {
+        const documentId = ctx.params.id
+        const result = await strapi.documents('api::order-set.order-set' as any).unpublish({ documentId })
+        return { data: result }
+    },
 }))

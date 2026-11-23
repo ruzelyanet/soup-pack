@@ -31,6 +31,9 @@ export interface OrderSet   extends Base {
     showInCatalog: boolean
     linkUrl?: string; banner?: { url: string } | null
     items: OrderSetItem[]
+    createdAt?: string; updatedAt?: string
+    /** null = черновик; строка ISO = опубликован. */
+    publishedAt?: string | null
     pricing?: {
         basePrice: number; finalPrice: number; discountPercent: number
         label?: string | null; endsAt?: string | null; itemsTotal?: number
