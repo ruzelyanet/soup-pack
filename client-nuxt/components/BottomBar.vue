@@ -40,8 +40,13 @@ let lastY = 0
 const THRESHOLD = 6   // игнор-шум мелких подёргиваний
 const TOP_GUARD = 12  // у самого верха — всегда показываем
 
+function getY() {
+    const el = document.scrollingElement || document.documentElement
+    return el.scrollTop || window.scrollY || 0
+}
+
 function onScroll() {
-    const y = window.scrollY
+    const y = getY()
     if (y < TOP_GUARD) { hidden.value = false; lastY = y; return }
     const dy = y - lastY
     if (Math.abs(dy) < THRESHOLD) return
@@ -50,10 +55,15 @@ function onScroll() {
 }
 
 onMounted(() => {
-    lastY = window.scrollY
+    lastY = getY()
+    // capture:true — поймаем скролл где бы он ни происходил (window, document, внутренний div).
+    document.addEventListener('scroll', onScroll, { passive: true, capture: true })
     window.addEventListener('scroll', onScroll, { passive: true })
 })
-onBeforeUnmount(() => window.removeEventListener('scroll', onScroll))
+onBeforeUnmount(() => {
+    document.removeEventListener('scroll', onScroll, true)
+    window.removeEventListener('scroll', onScroll)
+})
 </script>
 
 <template>
