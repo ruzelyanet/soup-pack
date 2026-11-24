@@ -12,6 +12,12 @@ const router = useRouter()
 const goBack = useGoBack()
 const catalog = useCatalog()
 const cart = useCart()
+const share = useShare()
+
+function onShare() {
+    const s = set.value
+    share({ title: s?.name, text: s?.description || undefined })
+}
 
 await useAsyncData('catalog', async () => { await catalog.fetchAll(); return true })
 
@@ -44,7 +50,7 @@ function addSet() {
                         class="size-11 rounded-full bg-sf flex items-center justify-center text-ink">
                     <Icon name="chevron-left" :size="20" :stroke="2.4" />
                 </NuxtLink>
-                <button type="button" aria-label="Поделиться"
+                <button type="button" aria-label="Поделиться" @click="onShare"
                         class="size-11 rounded-full bg-sf flex items-center justify-center text-ink">
                     <Icon name="share" :size="20" />
                 </button>
