@@ -9,6 +9,13 @@ import { productImg } from '@/services/api'
 const router = useRouter()
 const catalog = useCatalog()
 
+await useAsyncData('catalog', () => catalog.fetchAll())
+
+useSeoMeta({
+    title: 'Наборы SOUP PACK — готовые супы и пасты с доставкой в Ташкенте',
+    description: 'Экономичные наборы из нескольких блюд SOUP PACK: удобно для семьи, выгоднее по цене.',
+})
+
 const sets = computed(() => catalog.sets)
 
 function fmt(v: number) {

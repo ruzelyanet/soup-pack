@@ -9,6 +9,13 @@ import { productImg } from '@/services/api'
 const router = useRouter()
 const catalog = useCatalog()
 
+await useAsyncData('catalog', () => catalog.fetchAll())
+
+useSeoMeta({
+    title: 'Скидки и акции — SOUP PACK',
+    description: 'Актуальные скидки и акции SOUP PACK на супы, пасты и наборы блюд с доставкой по Ташкенту.',
+})
+
 function fmt(v: number) {
     return new Intl.NumberFormat('ru-RU').format(v) + ' сум'
 }

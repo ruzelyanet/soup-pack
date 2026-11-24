@@ -14,7 +14,18 @@ const router = useRouter()
 const catalog = useCatalog()
 const cart = useCart()
 
+await useAsyncData('catalog', () => catalog.fetchAll())
+
 const product = computed(() => catalog.findBySlug(route.params.slug as string))
+
+useSeoMeta({
+    title: () => product.value ? `${product.value.name} — SOUP PACK` : 'SOUP PACK',
+    description: () => product.value?.description || product.value?.composition?.toString() || '',
+    ogTitle: () => product.value?.name || 'SOUP PACK',
+    ogDescription: () => product.value?.description || '',
+    ogImage: () => product.value ? productImg(product.value) : '',
+    ogType: 'website',
+})
 const localQty = ref(1)
 
 /** Слайдер: главная картинка + gallery. Пустые отфильтровываются. */

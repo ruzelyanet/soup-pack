@@ -26,10 +26,10 @@ export const useCatalog = defineStore('catalog', () => {
     const contact    = ref<ShopContact>({ phone: '', workHours: '', city: '' })
     const loading    = ref(false)
     const error      = ref<string | null>(null)
-    let loaded = false
+    const loaded     = ref(false)
 
     async function fetchAll(force = false) {
-        if (loaded && !force) return
+        if (loaded.value && !force) return
         loading.value = true
         error.value = null
         try {
@@ -87,7 +87,7 @@ export const useCatalog = defineStore('catalog', () => {
                 })),
                 pricing: s.pricing || null,
             }))
-            loaded = true
+            loaded.value = true
         } catch (e: any) {
             error.value = e?.message || 'Не удалось загрузить каталог'
         } finally {

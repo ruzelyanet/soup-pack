@@ -5,6 +5,11 @@ import Icon from '@/components/Icon.vue'
 
 const router = useRouter()
 
+useSeoMeta({
+    title: 'Шеф-повар — Мирзахаким Газиев · SOUP PACK',
+    description: 'Шеф-повар SOUP PACK Мирзахаким Газиев. Династия Газиевых, школа ресторанной сети «Урюк», авторская проработка блюд.',
+})
+
 const portrait = '/chef/photo-09.jpeg'
 const gallery = [
     '/chef/photo-08.jpeg',

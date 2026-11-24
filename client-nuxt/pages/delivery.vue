@@ -6,6 +6,13 @@ import { useCatalog } from '@/stores/catalog'
 const router = useRouter()
 const catalog = useCatalog()
 
+await useAsyncData('catalog', () => catalog.fetchAll())
+
+useSeoMeta({
+    title: 'Доставка и оплата — SOUP PACK, готовые супы в Ташкенте',
+    description: 'Как доставляем блюда SOUP PACK, зоны доставки по Ташкенту, способы оплаты: наличные, перевод, карта.',
+})
+
 const payMethods = [
     { title: 'Наличными',       text: 'Доступно только при предзаказе с собственным курьером.' },
     { title: 'Переводом',       text: 'На карту менеджера. Подтверждаем заказ после поступления.' },

@@ -7,6 +7,13 @@ import { useCatalog } from '@/stores/catalog'
 const router = useRouter()
 const catalog = useCatalog()
 
+await useAsyncData('catalog', () => catalog.fetchAll())
+
+useSeoMeta({
+    title: 'О нас — SOUP PACK, ресторанные блюда, шоковая заморозка',
+    description: 'SOUP PACK: ресторанное блюдо, остановленное во времени. Шоковая заморозка при −40 °C сохраняет вкус и аромат как при подаче на кухне.',
+})
+
 const values = [
     { icon: 'leaf',     title: 'Натуральный состав', text: 'Только фермерские овощи, мясо и зелень. Без консервантов, усилителей вкуса и ароматизаторов.' },
     { icon: 'snow',     title: 'Шоковая заморозка', text: 'Технология «−40°C за минуты» сохраняет вкус, витамины и структуру ингредиентов.' },

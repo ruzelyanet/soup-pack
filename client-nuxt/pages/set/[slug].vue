@@ -12,9 +12,16 @@ const router = useRouter()
 const catalog = useCatalog()
 const cart = useCart()
 
+await useAsyncData('catalog', () => catalog.fetchAll())
+
 const set = computed(() =>
     catalog.sets.find((s) => s.slug === route.params.slug) || catalog.sets[0],
 )
+
+useSeoMeta({
+    title: () => set.value ? `${set.value.name} — SOUP PACK` : 'Набор — SOUP PACK',
+    description: () => set.value?.description || '',
+})
 const qty = ref(1)
 
 function fmt(v: number) {

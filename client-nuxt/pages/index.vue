@@ -16,6 +16,17 @@ const auth = useAuth()
 const ui = useUi()
 const router = useRouter()
 
+await useAsyncData('catalog', () => catalog.fetchAll())
+
+useSeoMeta({
+    title: 'SOUP PACK — готовые супы с доставкой в Ташкенте · Том ям, борщ, лагман',
+    description: 'Том ям, борщ, лагман, солянка, шурпа, харчо в формате порции 350 г. Натуральные ингредиенты, шоковая заморозка −40 °C, 5 минут на разогрев.',
+    ogTitle: 'SOUP PACK — готовые супы с доставкой в Ташкенте',
+    ogDescription: 'Готовые супы и пасты, шоковая заморозка, формат «шайбы» 350 г.',
+    ogImage: '/og.jpg',
+    ogType: 'website',
+})
+
 const sets = computed(() => catalog.sets)
 
 /** Товары секции: для «Хитов» — тег «хит», для «Наборов» — пусто (рендерим наборы), иначе — ручной список. */

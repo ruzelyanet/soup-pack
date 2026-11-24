@@ -9,9 +9,16 @@ const route = useRoute()
 const router = useRouter()
 const catalog = useCatalog()
 
+await useAsyncData('catalog', () => catalog.fetchAll())
+
 const slug = computed(() => String(route.params.slug))
 const category = computed(() => catalog.categories.find(c => c.slug === slug.value))
 const items = computed(() => catalog.products.filter(p => p.category?.slug === slug.value))
+
+useSeoMeta({
+    title: () => category.value ? `${category.value.name} — SOUP PACK` : 'Категория — SOUP PACK',
+    description: () => category.value ? `${category.value.name}: готовые блюда SOUP PACK с доставкой в Ташкенте.` : '',
+})
 </script>
 
 <template>
