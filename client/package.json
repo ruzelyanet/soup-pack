@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@iconify/vue": "^5.0.4",
+    "@nuxtjs/sitemap": "^8.6.2",
     "@pinia/nuxt": "^0.5.5",
     "@primevue/nuxt-module": "^4.5.5",
     "@primevue/themes": "^4.5.4",
@@ -19,6 +20,7 @@
     "axios": "^1.21.0",
     "leaflet": "^1.9.4",
     "nuxt": "^3.14.1592",
+    "nuxt-schema-org": "^6.4.3",
     "pinia": "^2.2.6",
     "primeicons": "^8.0.2",
     "primevue": "^4.5.5",

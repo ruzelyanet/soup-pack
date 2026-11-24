@@ -20,6 +20,17 @@ useSeoMeta({
     title: () => category.value ? `${category.value.name} — SOUP PACK` : 'Категория — SOUP PACK',
     description: () => category.value ? `${category.value.name}: готовые блюда SOUP PACK с доставкой в Ташкенте.` : '',
 })
+
+useSchemaOrg([
+    defineBreadcrumb({
+        itemListElement: () => {
+            const c = category.value
+            const items: Array<{ name: string; item: string }> = [{ name: 'Главная', item: '/' }]
+            if (c) items.push({ name: c.name, item: `/category/${c.slug}` })
+            return items
+        },
+    }),
+])
 </script>
 
 <template>

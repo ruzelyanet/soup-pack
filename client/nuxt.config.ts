@@ -4,7 +4,14 @@ export default defineNuxtConfig({
     compatibilityDate: '2025-01-01',
     // DevTools-панель только в dev; в prod билде Nuxt её не включает в любом случае.
     devtools: { enabled: process.env.NODE_ENV !== 'production' },
-    modules: ['@pinia/nuxt', '@primevue/nuxt-module'],
+    modules: ['@pinia/nuxt', '@primevue/nuxt-module', '@nuxtjs/sitemap', 'nuxt-schema-org'],
+
+    site: { url: process.env.NUXT_PUBLIC_SITE_URL || 'https://soup-pack.uz' },
+
+    sitemap: {
+        sources: ['/api/__sitemap__/urls'],
+        exclude: ['/checkout', '/cart', '/account', '/login', '/success/**', '/order/**', '/f/**'],
+    },
 
     css: ['~/assets/css/main.css'],
 

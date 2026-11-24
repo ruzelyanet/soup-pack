@@ -33,6 +33,36 @@ useSeoMeta({
     ogImage: () => product.value ? productImg(product.value) : '',
     ogType: 'website',
 })
+
+useSchemaOrg([
+    defineProduct({
+        name: () => product.value?.name || '',
+        description: () => product.value?.description || '',
+        image: () => (product.value ? productImg(product.value) : ''),
+        offers: () => {
+            const p = product.value
+            if (!p) return []
+            const pricing = (p as any).pricing
+            const price = pricing?.finalPrice ?? p.price
+            return [{
+                price,
+                priceCurrency: 'UZS',
+                availability: p.available !== false ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+                ...(pricing?.endsAt ? { priceValidUntil: pricing.endsAt } : {}),
+            }]
+        },
+    }),
+    defineBreadcrumb({
+        itemListElement: () => {
+            const p = product.value
+            if (!p) return []
+            const items: Array<{ name: string; item: string }> = [{ name: 'Главная', item: '/' }]
+            if (p.category?.slug) items.push({ name: p.category.name, item: `/category/${p.category.slug}` })
+            items.push({ name: p.name, item: `/product/${p.slug}` })
+            return items
+        },
+    }),
+])
 const localQty = ref(1)
 
 /** Слайдер: главная картинка + gallery. Пустые отфильтровываются. */
