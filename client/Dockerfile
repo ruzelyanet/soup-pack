@@ -1,15 +1,29 @@
-FROM node:22-alpine AS build
+# Multi-stage build для Nuxt 3 SSR в проде.
+FROM node:22-alpine AS builder
 WORKDIR /app
-COPY package.json ./
-RUN npm install
-COPY . .
+# Те же имена env vars, что в старом client/Dockerfile — Coolify прокинет без изменений.
 ARG VITE_API_URL
 ARG VITE_API_TOKEN
 ENV VITE_API_URL=$VITE_API_URL
 ENV VITE_API_TOKEN=$VITE_API_TOKEN
+# Дублируем в NUXT_PUBLIC_* — Nitro читает их на сервере через process.env в services/api.ts.
+ENV NUXT_PUBLIC_API_URL=$VITE_API_URL
+ENV NUXT_PUBLIC_API_TOKEN=$VITE_API_TOKEN
+COPY package*.json ./
+RUN npm ci
+COPY . .
 RUN npm run build
 
-FROM nginx:alpine
-COPY --from=build /app/dist /usr/share/nginx/html
-RUN printf 'server {\n  listen 80;\n  root /usr/share/nginx/html;\n  index index.html;\n  location / { try_files $uri $uri/ /index.html; }\n}\n' > /etc/nginx/conf.d/default.conf
-EXPOSE 80
+FROM node:22-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+ENV HOST=0.0.0.0
+ENV PORT=3000
+# Runtime env for services/api.ts server-side fallback.
+ARG VITE_API_URL
+ARG VITE_API_TOKEN
+ENV NUXT_PUBLIC_API_URL=$VITE_API_URL
+ENV NUXT_PUBLIC_API_TOKEN=$VITE_API_TOKEN
+COPY --from=builder /app/.output ./.output
+EXPOSE 3000
+CMD ["node", ".output/server/index.mjs"]

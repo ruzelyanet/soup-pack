@@ -1,4 +1,8 @@
 node_modules
-dist
-.git
-.env*
+.nuxt
+.output
+.data
+.env
+.env.local
+.DS_Store
+*.log
