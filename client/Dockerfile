@@ -10,7 +10,10 @@ ENV VITE_API_TOKEN=$VITE_API_TOKEN
 ENV NUXT_PUBLIC_API_URL=$VITE_API_URL
 ENV NUXT_PUBLIC_API_TOKEN=$VITE_API_TOKEN
 COPY package*.json ./
-RUN npm ci
+# shortcut: npm install вместо npm ci — у нас в lock-файле transient conflict
+# по cac/commander между Nuxt deps; install разрулит, ci strict падает.
+# Переключить на npm ci, когда получится перегенерировать lock без конфликта.
+RUN npm install --no-audit --no-fund
 COPY . .
 RUN npm run build
 
