@@ -42,12 +42,82 @@ const values = [
                     Вкусный обед<br>
                     в любом месте
                 </h2>
-                <p class="m-0 text-[15px] text-deepmut leading-relaxed">
-                    Мы делаем честные супы и пасты в формате «шайбы» 350 г — удобно разогреть,
-                    невозможно отличить от свежеприготовленного. Это не «корма быстрого
-                    приготовления», это настоящая еда, которую технологи и повара собирают
-                    по рецептам каждый день.
-                </p>
+                <div class="flex flex-col gap-4 text-[14px] text-deepmut leading-relaxed">
+                    <p class="m-0 font-bold text-deepink text-[16px]">
+                        SOUP PACK: ресторанное блюдо, остановленное во времени
+                    </p>
+                    <p class="m-0">
+                        Мы берём блюдо, которое только что приготовил повар, и шоковой заморозкой
+                        при −40&nbsp;°C сохраняем его таким, каким оно было в момент подачи.
+                        Вы разогреваете его и получаете тот же вкус, аромат, цвет и текстуру,
+                        что и на кухне ресторана.
+                    </p>
+
+                    <p class="m-0 mt-2 font-bold text-deepink text-[15px]">
+                        Что такое шоковая заморозка и почему это важно
+                    </p>
+                    <p class="m-0">
+                        При обычной заморозке продукт остывает медленно. В нём образуются крупные
+                        кристаллы льда, они разрушают структуру ингредиентов, и после разморозки
+                        блюдо становится водянистым, тусклым и теряет вкус.
+                    </p>
+                    <p class="m-0">
+                        Шоковая заморозка устроена иначе. Горячее, только что приготовленное блюдо
+                        за считанные минуты охлаждают при температуре −40&nbsp;°C. Кристаллы льда
+                        не успевают вырасти, поэтому овощи остаются упругими, мясо сочным, паста
+                        сохраняет текстуру, а бульон остаётся прозрачным и насыщенным.
+                    </p>
+                    <p class="m-0">
+                        Мы не консервируем еду, а сохраняем её свежей, только что приготовленной.
+                    </p>
+
+                    <p class="m-0 mt-2 font-bold text-deepink text-[15px]">
+                        Как появляется каждое блюдо SOUP PACK
+                    </p>
+                    <ol class="m-0 pl-5 list-decimal flex flex-col gap-1.5">
+                        <li><span class="font-bold text-deepink">Готовим как в ресторане.</span>
+                            Повара работают по авторским рецептурам, из отборных ингредиентов, с тем же
+                            вниманием к деталям, что и для гостя в зале.</li>
+                        <li><span class="font-bold text-deepink">Замораживаем сразу.</span>
+                            Через несколько минут после приготовления блюдо отправляется в шоковую
+                            заморозку при −40&nbsp;°C, пока вкус и аромат на пике.</li>
+                        <li><span class="font-bold text-deepink">Формуем порцию.</span>
+                            Каждое блюдо становится аккуратной шайбой весом 350&nbsp;граммов.
+                            Это полноценная порция на одного.</li>
+                        <li><span class="font-bold text-deepink">Вы разогреваете.</span>
+                            Несколько минут на плите или в микроволновке, и перед вами блюдо,
+                            которое выглядит и пахнет так, будто его только что сняли с огня.</li>
+                    </ol>
+
+                    <p class="m-0 mt-2 font-bold text-deepink text-[15px]">
+                        Почему SOUP PACK
+                    </p>
+                    <ul class="m-0 pl-5 list-disc flex flex-col gap-1.5">
+                        <li><span class="font-bold text-deepink">Вкус как в ресторане.</span>
+                            Шоковая заморозка при −40&nbsp;°C сохраняет вкус, аромат и текстуру блюда.</li>
+                        <li><span class="font-bold text-deepink">Красота подачи.</span>
+                            Цвет овощей, прозрачность бульона, форма пасты остаются как на тарелке у повара.</li>
+                        <li><span class="font-bold text-deepink">Порция 350&nbsp;г.</span>
+                            Полноценный обед без лишнего.</li>
+                        <li><span class="font-bold text-deepink">Несколько минут вместо часов.</span>
+                            Ресторанное блюдо дома или в офисе без готовки.</li>
+                        <li><span class="font-bold text-deepink">Разнообразие.</span>
+                            Супы и пасты на любой вкус.</li>
+                    </ul>
+
+                    <p class="m-0 mt-2 font-bold text-deepink text-[15px]">
+                        Наша миссия
+                    </p>
+                    <p class="m-0">
+                        Мы хотим доказать, что замороженная еда может быть ресторанной. Что «быстро»
+                        не значит «невкусно», а «заморожено» не значит «хуже свежего». При правильной
+                        технологии заморозка не забирает у блюда качество, а сохраняет его.
+                    </p>
+
+                    <p class="m-0 mt-2 font-bold text-deepink text-[15px]">
+                        SOUP PACK. Открой, разогрей, наслаждайся ресторанным вкусом.
+                    </p>
+                </div>
             </div>
             <div class="relative pt-5 flex items-center justify-center">
                 <SoupPuck variant="tom-yam" :size="160" :ring="true" :shadow="true" />
@@ -97,20 +167,45 @@ const values = [
             </ul>
         </section>
 
+        <!-- Halal -->
+        <section class="px-4 pt-8">
+            <div class="bg-sf rounded-[22px] p-5 flex items-center gap-4 border border-emerald-600/20">
+                <div class="shrink-0 size-14 rounded-2xl bg-emerald-600/15 text-emerald-700 flex items-center justify-center">
+                    <Icon name="check" :size="28" :stroke="2.4" />
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="font-display font-black text-[18px] leading-tight">Халяль</div>
+                    <p class="m-0 mt-1 text-[13px] text-mut leading-relaxed">
+                        Вся продукция SOUP PACK соответствует стандартам халяль: мясо
+                        и ингредиенты от проверенных поставщиков.
+                    </p>
+                </div>
+            </div>
+        </section>
+
         <!-- Stats -->
         <section class="px-4 pt-8">
-            <div class="grid grid-cols-3 gap-2">
-                <div class="bg-sf rounded-[18px] p-4 text-center">
-                    <div class="font-display font-black text-[22px] text-acct">350&nbsp;г</div>
-                    <div class="text-[11px] font-bold uppercase tracking-wider text-fnt mt-1">формат порции</div>
+            <div class="bg-acc text-white rounded-[24px] px-5 py-2 divide-y divide-white/15">
+                <div class="py-4 flex items-center gap-4">
+                    <div class="shrink-0 size-11 rounded-xl bg-white/15 flex items-center justify-center">
+                        <Icon name="bag" :size="22" :stroke="2" />
+                    </div>
+                    <div class="font-display font-black text-[22px] leading-none">350&nbsp;г</div>
+                    <div class="ml-auto text-[13px] font-semibold opacity-90 text-right">Формат порции</div>
                 </div>
-                <div class="bg-sf rounded-[18px] p-4 text-center">
-                    <div class="font-display font-black text-[22px] text-acct">10+</div>
-                    <div class="text-[11px] font-bold uppercase tracking-wider text-fnt mt-1">рецептов в меню</div>
+                <div class="py-4 flex items-center gap-4">
+                    <div class="shrink-0 size-11 rounded-xl bg-white/15 flex items-center justify-center">
+                        <Icon name="sparkles" :size="22" :stroke="2" />
+                    </div>
+                    <div class="font-display font-black text-[22px] leading-none">10+</div>
+                    <div class="ml-auto text-[13px] font-semibold opacity-90 text-right">Рецептов в меню</div>
                 </div>
-                <div class="bg-sf rounded-[18px] p-4 text-center">
-                    <div class="font-display font-black text-[22px] text-acct">30&nbsp;дней</div>
-                    <div class="text-[11px] font-bold uppercase tracking-wider text-fnt mt-1">хранение в морозилке</div>
+                <div class="py-4 flex items-center gap-4">
+                    <div class="shrink-0 size-11 rounded-xl bg-white/15 flex items-center justify-center">
+                        <Icon name="snow" :size="22" :stroke="2" />
+                    </div>
+                    <div class="font-display font-black text-[22px] leading-none">90&nbsp;дней</div>
+                    <div class="ml-auto text-[13px] font-semibold opacity-90 text-right">Хранение в морозилке</div>
                 </div>
             </div>
         </section>
