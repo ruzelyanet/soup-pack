@@ -13,6 +13,7 @@ function finalPrice(p: any) { return pricingOf(p)?.finalPrice ?? p?.price ?? 0 }
 function basePriceOf(p: any) { return pricingOf(p)?.basePrice ?? p?.price ?? 0 }
 
 const router = useRouter()
+const goBack = useGoBack()
 const catalog = useCatalog()
 const q = ref('')
 const inputRef = ref<HTMLInputElement | null>(null)
@@ -40,7 +41,7 @@ const SUGGEST = ['Том-ям', 'Крем-суп', 'Куриный', 'Набор
 <template>
     <section class="flex-1 flex flex-col">
         <header class="px-4 pt-3.5 pb-3 flex items-center gap-2">
-            <button type="button" aria-label="Назад" @click="router.back()"
+            <button type="button" aria-label="Назад" @click="goBack()"
                     class="size-11 rounded-full bg-sf flex items-center justify-center">
                 <Icon name="chevron-left" :size="20" :stroke="2.4" />
             </button>

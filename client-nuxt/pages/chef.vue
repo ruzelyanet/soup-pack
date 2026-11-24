@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import Icon from '@/components/Icon.vue'
 
 const router = useRouter()
+const goBack = useGoBack()
 
 useSeoMeta({
     title: 'Шеф-повар — Мирзахаким Газиев · SOUP PACK',
@@ -35,7 +36,7 @@ const lightbox = ref<string | null>(null)
     <section class="flex-1 flex flex-col pb-6">
         <!-- Header -->
         <header class="px-4 pt-3.5 pb-2 flex items-center gap-3">
-            <button type="button" aria-label="Назад" @click="router.back()"
+            <button type="button" aria-label="Назад" @click="goBack()"
                     class="size-11 rounded-full bg-sf flex items-center justify-center">
                 <Icon name="chevron-left" :size="20" :stroke="2.4" />
             </button>

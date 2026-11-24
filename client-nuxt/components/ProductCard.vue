@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useRouter } from 'vue-router'
 import { useCart } from '@/stores/cart'
 import SoupPuck from '@/components/SoupPuck.vue'
 import Icon from '@/components/Icon.vue'
@@ -8,7 +7,6 @@ import { productImg, mediaUrl } from '@/services/api'
 import type { Product } from '@/types'
 
 const props = defineProps<{ product: Product }>()
-const router = useRouter()
 const cart = useCart()
 
 /** Слайдер: главная + gallery, отфильтровано от пустых. */
@@ -51,9 +49,9 @@ const tintClass = computed(() => {
 function fmt(v: number) {
     return new Intl.NumberFormat('ru-RU').format(v) + ' сум'
 }
-function open() {
-    if (swiped) { swiped = false; return }
-    router.push(`/product/${props.product.slug}`)
+function onCardClick(e: Event) {
+    // Свайп галереи не должен открывать карточку.
+    if (swiped) { e.preventDefault(); swiped = false }
 }
 function add() {
     cart.addProduct(props.product, 1)
@@ -64,10 +62,9 @@ function dec() {
 </script>
 
 <template>
-    <article class="bg-sf rounded-[24px] overflow-hidden flex flex-col shadow-[0_1px_0_var(--color-ln)]">
-        <button
-            type="button"
-            @click="open"
+    <NuxtLink :to="`/product/${product.slug}`" @click="onCardClick"
+              class="bg-sf rounded-[24px] overflow-hidden flex flex-col shadow-[0_1px_0_var(--color-ln)] no-underline text-ink">
+        <div
             @touchstart.passive="onTouchStart"
             @touchend="onTouchEnd"
             class="relative h-[150px] flex items-center justify-center"
@@ -101,7 +98,7 @@ function dec() {
                       class="size-1.5 rounded-full transition-colors"
                       :class="i === activeIdx ? 'bg-white' : 'bg-white/50'"></span>
             </div>
-        </button>
+        </div>
 
         <div class="p-3 flex flex-col gap-1 flex-1">
             <h3 class="font-extrabold text-[15px] leading-tight">{{ product.name }}</h3>
@@ -138,5 +135,5 @@ function dec() {
                 </button>
             </div>
         </div>
-    </article>
+    </NuxtLink>
 </template>

@@ -8,6 +8,7 @@ import Icon from '@/components/Icon.vue'
 
 const auth = useAuth()
 const router = useRouter()
+const goBack = useGoBack()
 const toast = useToast()
 
 /** XX XXX XX XX из последних 9 цифр. */
@@ -44,7 +45,7 @@ async function enter() {
 
 <template>
     <section class="flex-1 flex flex-col px-4 pt-6 safe-top">
-        <button type="button" @click="router.back()" aria-label="Назад"
+        <button type="button" @click="goBack()" aria-label="Назад"
                 class="size-11 rounded-full bg-sf flex items-center justify-center">
             <Icon name="chevron-left" :size="20" :stroke="2.4" />
         </button>

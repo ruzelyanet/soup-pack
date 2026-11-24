@@ -7,6 +7,7 @@ import Icon from '@/components/Icon.vue'
 import { productImg } from '@/services/api'
 
 const router = useRouter()
+const goBack = useGoBack()
 const catalog = useCatalog()
 
 await useAsyncData('catalog', () => catalog.fetchAll())
@@ -88,7 +89,7 @@ const discountCards = computed(() => {
     <section class="flex-1 flex flex-col pb-2">
         <!-- Header -->
         <header class="px-4 pt-3.5 pb-2 flex items-center gap-3">
-            <button type="button" aria-label="Назад" @click="router.back()"
+            <button type="button" aria-label="Назад" @click="goBack()"
                     class="size-11 rounded-full bg-sf flex items-center justify-center">
                 <Icon name="chevron-left" :size="20" :stroke="2.4" />
             </button>

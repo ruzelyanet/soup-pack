@@ -9,6 +9,7 @@ import Icon from '@/components/Icon.vue'
 
 const route = useRoute()
 const router = useRouter()
+const goBack = useGoBack()
 const catalog = useCatalog()
 const cart = useCart()
 
@@ -39,7 +40,7 @@ function addSet() {
     <section v-if="set" class="flex-1 flex flex-col">
         <div class="relative bg-deep text-deepink rounded-b-[36px] pb-8">
             <div class="absolute top-3.5 left-4 right-4 flex justify-between z-10">
-                <button type="button" aria-label="Назад" @click="router.back()"
+                <button type="button" aria-label="Назад" @click="goBack()"
                         class="size-11 rounded-full bg-sf flex items-center justify-center text-ink">
                     <Icon name="chevron-left" :size="20" :stroke="2.4" />
                 </button>

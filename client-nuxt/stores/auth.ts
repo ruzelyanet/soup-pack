@@ -58,8 +58,9 @@ function mapOrder(o: any): Order {
 }
 
 export const useAuth = defineStore('auth', () => {
-    const client = ref<Client | null>(read<Client | null>(STORAGE_CLIENT, null))
-    const myOrders = ref<Order[]>(read<Order[]>(STORAGE_ORDERS, []))
+    // SSR-safe: пусто на старте — гидрируем localStorage отложенно.
+    const client = ref<Client | null>(null)
+    const myOrders = ref<Order[]>([])
     const loading = ref(false)
     const error = ref<string | null>(null)
 
@@ -163,6 +164,10 @@ export const useAuth = defineStore('auth', () => {
     }
 
     if (import.meta.client) {
+        setTimeout(() => {
+            client.value = read<Client | null>(STORAGE_CLIENT, null)
+            myOrders.value = read<Order[]>(STORAGE_ORDERS, [])
+        }, 0)
         watch(client, (v) => localStorage.setItem(STORAGE_CLIENT, JSON.stringify(v)))
         watch(myOrders, (v) => localStorage.setItem(STORAGE_ORDERS, JSON.stringify(v)), { deep: true })
     }

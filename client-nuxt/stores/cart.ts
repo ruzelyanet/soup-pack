@@ -83,7 +83,9 @@ function readStorage(): CartItem[] {
 }
 
 export const useCart = defineStore('cart', () => {
-    const items = ref<CartItem[]>(readStorage())
+    // SSR-safe: стартуем с пустым стейтом (как на сервере), гидрируемся из localStorage
+    // отложенно, чтобы не ломать Vue-hydration.
+    const items = ref<CartItem[]>([])
     const quote = ref<QuoteSnapshot | null>(null)
     const quoting = ref(false)
 
@@ -199,6 +201,11 @@ export const useCart = defineStore('cart', () => {
     }
 
     if (import.meta.client) {
+        // Гидрация из localStorage в следующем тике — после Vue-hydration.
+        setTimeout(() => {
+            items.value = readStorage()
+            refetch()
+        }, 0)
         watch(
             items,
             (v) => {
@@ -206,8 +213,6 @@ export const useCart = defineStore('cart', () => {
             },
             { deep: true },
         )
-        // Начальный расчёт на клиенте, если есть сохранённые позиции.
-        refetch()
     }
 
     return {

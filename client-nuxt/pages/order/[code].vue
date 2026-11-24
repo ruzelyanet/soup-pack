@@ -10,6 +10,7 @@ import type { Order, OrderLine } from '@/types'
 
 const route = useRoute()
 const router = useRouter()
+const goBack = useGoBack()
 const auth = useAuth()
 const cart = useCart()
 const catalog = useCatalog()
@@ -163,7 +164,7 @@ function repeat() {
 <template>
     <section v-if="order" class="flex-1 flex flex-col">
         <header class="px-4 pt-3.5 pb-2 flex items-center gap-3">
-            <button type="button" aria-label="Назад" @click="router.back()"
+            <button type="button" aria-label="Назад" @click="goBack()"
                     class="size-11 rounded-full bg-sf flex items-center justify-center">
                 <Icon name="chevron-left" :size="20" :stroke="2.4" />
             </button>
