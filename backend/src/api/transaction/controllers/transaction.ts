@@ -84,6 +84,7 @@ export default factories.createCoreController('api::transaction.transaction' as 
         }
         if (q.code) where.code = { $containsi: String(q.code).trim() }
         if (q.orderCode) where.order = { code: { $containsi: String(q.orderCode).trim() } }
+        if ((q as any).clientDocId) where.client = { documentId: String((q as any).clientDocId) }
         if (employee.role === 'courier') where.receivedBy = employee.id
 
         const page = Math.max(1, Number(q.page) || 1)

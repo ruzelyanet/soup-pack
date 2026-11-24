@@ -110,6 +110,10 @@ export type Quote = {
     subtotal: number
     discountTotal: number
     total: number
+    /** Стоимость доставки по выбранному способу (delivery-method.price). */
+    deliveryFee: number
+    /** Итог к оплате: total + deliveryFee. */
+    grandTotal: number
     appliedDiscounts: Array<{ discountId: number; name: string; publicLabel?: string | null; amount: number }>
     hints: QuoteHint[]
     explanations: QuoteExplanation[]
@@ -590,6 +594,8 @@ export function evaluate(
         subtotal,
         discountTotal,
         total,
+        deliveryFee: 0,
+        grandTotal: total,
         appliedDiscounts: Array.from(appliedMap.values()),
         hints,
         explanations,
@@ -1085,7 +1091,21 @@ export default ({ strapi }: Deps) => ({
             at,
         }
 
-        return evaluate(cart, activeDiscounts, ctx)
+        const result = evaluate(cart, activeDiscounts, ctx)
+
+        // Стоимость доставки: ищем способ по коду и прибавляем его price к итогу.
+        let deliveryFee = 0
+        if (ctx.deliveryMethod) {
+            try {
+                const dm = await strapi.db.query('api::delivery-method.delivery-method').findOne({
+                    where: { code: ctx.deliveryMethod },
+                })
+                if (dm && dm.active !== false) deliveryFee = Number(dm.price || 0)
+            } catch { /* способ не настроен — 0 */ }
+        }
+        result.deliveryFee = deliveryFee
+        result.grandTotal = result.total + deliveryFee
+        return result
     },
 
     // ─────────── Миграции ───────────

@@ -100,4 +100,45 @@ export default factories.createCoreController('api::client.client', ({ strapi })
 
         ctx.body = { data: safeClient(updated) }
     },
+
+    /** Агрегаты по заказам клиента: всего/кол-во, средний чек, последняя покупка, помесячная гистограмма (6 месяцев). */
+    async stats(ctx: any) {
+        const { documentId } = ctx.params
+        const c = await strapi.documents('api::client.client').findOne({ documentId })
+        if (!c) return ctx.notFound()
+
+        const orders = await strapi.db.query('api::order.order').findMany({
+            where: { client: { id: c.id }, status: { $ne: 'canceled' } },
+            select: ['id', 'total', 'createdAt'],
+        })
+
+        const totalCount = orders.length
+        const totalAmount = orders.reduce((s: number, o: any) => s + Number(o.total || 0), 0)
+        const avgCheck = totalCount > 0 ? Math.round(totalAmount / totalCount) : 0
+        const lastPurchaseAt = orders.reduce((max: string | null, o: any) => {
+            return !max || new Date(o.createdAt) > new Date(max) ? o.createdAt : max
+        }, null as string | null)
+
+        // Помесячная гистограмма за последние 6 месяцев.
+        const now = new Date()
+        const months: Array<{ ym: string; label: string; count: number; amount: number }> = []
+        for (let i = 5; i >= 0; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+            const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+            months.push({
+                ym,
+                label: d.toLocaleString('ru-RU', { month: 'short' }),
+                count: 0,
+                amount: 0,
+            })
+        }
+        for (const o of orders) {
+            const d = new Date(o.createdAt)
+            const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+            const bucket = months.find((m) => m.ym === ym)
+            if (bucket) { bucket.count++; bucket.amount += Number(o.total || 0) }
+        }
+
+        ctx.body = { data: { totalCount, totalAmount, avgCheck, lastPurchaseAt, months } }
+    },
 }))

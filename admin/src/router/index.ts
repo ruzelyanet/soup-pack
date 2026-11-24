@@ -40,6 +40,7 @@ const router = createRouter({
                 { path: 'promotions/:id',     redirect: (to) => `/discounts/${to.params.id}` },
 
                 { path: 'clients',            name: 'clients',       component: () => import('@/pages/clients/Clients.vue'), meta: { roles: ['manager', 'duty'] } satisfies Meta },
+                { path: 'clients/:id',        name: 'client',        component: () => import('@/pages/clients/ClientCard.vue'), meta: { roles: ['manager', 'duty'] } satisfies Meta },
 
                 { path: 'employees',          name: 'employees',     component: () => import('@/pages/employees/Employees.vue'), meta: { roles: ['manager'] } satisfies Meta },
                 { path: 'employees/:id',      name: 'employee',      component: () => import('@/pages/employees/EmployeeCard.vue'), meta: { roles: ['manager'] } satisfies Meta },
@@ -48,6 +49,7 @@ const router = createRouter({
                 { path: 'request-forms/:id',   name: 'request-form',   component: () => import('@/pages/request-forms/Editor.vue'), meta: { roles: ['manager'] } satisfies Meta },
                 { path: 'settings/sla',        name: 'settings-sla',   component: () => import('@/pages/request-settings/Editor.vue'), meta: { roles: ['manager'] } satisfies Meta },
                 { path: 'settings/contacts',   name: 'settings-contacts', component: () => import('@/pages/ShopContact.vue'), meta: { roles: ['manager'] } satisfies Meta },
+                { path: 'delivery-methods',    name: 'delivery-methods', component: () => import('@/pages/delivery-methods/DeliveryMethods.vue'), meta: { roles: ['manager'] } satisfies Meta },
             ],
         },
     ],

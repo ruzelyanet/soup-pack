@@ -7,7 +7,6 @@ import { useAuth } from '@/stores/auth'
 import { useCatalog } from '@/stores/catalog'
 import { useCheckout, type PayMethod } from '@/stores/checkout'
 import { useToast } from 'primevue/usetoast'
-import DatePicker from 'primevue/datepicker'
 import AddressPicker from '@/components/AddressPicker.vue'
 import UpsellModal from '@/components/UpsellModal.vue'
 import Icon from '@/components/Icon.vue'
@@ -80,8 +79,6 @@ function clearFieldError(key: string) {
 watch(() => form.fullName,      () => clearFieldError('fullName'))
 watch(() => form.phone,         () => clearFieldError('phone'))
 watch(() => form.address,       () => clearFieldError('address'))
-watch(() => form.preorderDate,  () => clearFieldError('deliverySlotAt'))
-watch(() => form.preorderTime,  () => clearFieldError('deliverySlotAt'))
 watch(() => cart.lines.length,  () => clearFieldError('items'))
 
 /** Если старый сохранённый адрес содержит «кв. N» внутри строки — вытащить в form.flat
@@ -104,8 +101,10 @@ watch(() => cart.lines.length,  () => clearFieldError('items'))
 type Tier = { minTotal: number; percent: number }
 
 // Транслируем выбор способа доставки/оплаты в cart — чтобы quote считал корректно.
-watch(() => [form.delivery, form.pay] as const, ([d, p]) => {
-    cart.setContext({ deliveryMethod: d, paymentMethod: p })
+// Используем именно код из сущности delivery-method (а не enum) — иначе скидки по
+// `conditions.deliveryMethods: ['yadex-delivery']` не матчатся.
+watch(() => [form.deliveryMethodCode, form.delivery, form.pay] as const, ([code, d, p]) => {
+    cart.setContext({ deliveryMethod: code || d, paymentMethod: p })
 }, { immediate: true })
 
 /** Применённая order-уровневая скидка (если есть) — её процент показываем в бейджах. */
@@ -148,8 +147,8 @@ const cartDiscountAmount = computed(() => {
     return sum
 })
 
-/** Итоговая сумма — просто `cart.total` (сервер уже всё посчитал). */
-const grandTotal = computed(() => cart.total)
+/** Итоговая сумма — товары − скидки + стоимость доставки. */
+const grandTotal = computed(() => cart.grandTotal)
 
 /** Следующий тариф — ближайшая `NEXT_TIER`-подсказка из серверного quote. */
 const nextTier = computed(() => {
@@ -161,8 +160,6 @@ const nextTier = computed(() => {
     return { minTotal: cart.subtotal + hint.missing, percent: pctMatch ? Number(pctMatch[1]) : 0 }
 })
 
-/** Минимальная дата для предзаказа — сегодня. */
-const minDate = new Date()
 
 /** Способы оплаты.
  *  - Наличными: только при предзаказе.
@@ -171,12 +168,9 @@ const minDate = new Date()
 const paymentMethods = computed(() => {
     const list: Array<{ k: PayMethod; label: string; subtitle?: string; icon: string; soon?: boolean }> = []
     list.push({ k: 'cash', label: 'Наличными', subtitle: 'оплата при получении', icon: 'pi-wallet' })
-    if (form.delivery === 'preorder') {
-        list.push({ k: 'card', label: 'Картой курьеру',  subtitle: 'soliq qrcode',         icon: 'pi-credit-card' })
-    }
-    list.push({ k: 'transfer', label: 'Переводом',       subtitle: 'на карту менеджера',   icon: 'pi-send' })
-    list.push({ k: 'click',    label: 'Click',           subtitle: 'подключим скоро',      icon: 'pi-mobile', soon: true })
-    list.push({ k: 'payme',    label: 'Payme',           subtitle: 'подключим скоро',      icon: 'pi-mobile', soon: true })
+    list.push({ k: 'transfer', label: 'Переводом', subtitle: 'на карту менеджера', icon: 'pi-send' })
+    list.push({ k: 'click',    label: 'Click',   subtitle: 'подключим скоро', icon: 'pi-mobile', soon: true })
+    list.push({ k: 'payme',    label: 'Payme',   subtitle: 'подключим скоро', icon: 'pi-mobile', soon: true })
     return list
 })
 
@@ -397,14 +391,7 @@ async function submit() {
             .filter(Boolean)
             .join(', ')
 
-        // Соберём ISO для слота предзаказа.
-        let deliverySlotAt: string | null = null
-        if (form.delivery === 'preorder' && form.preorderDate) {
-            const [h, m] = form.preorderTime.split(':').map((x) => parseInt(x, 10))
-            const d = new Date(form.preorderDate)
-            d.setHours(h || 12, m || 0, 0, 0)
-            deliverySlotAt = d.toISOString()
-        }
+        const deliverySlotAt: string | null = null
 
         const payload = {
             client: {
@@ -420,7 +407,8 @@ async function submit() {
                 : { type: 'product', productId: i.refId, qty: i.qty }),
             comment: form.comment,
             paymentMethod: form.pay,
-            deliveryMethod: form.delivery,
+            deliveryMethod: 'courier_now',
+            deliveryMethodCode: form.deliveryMethodCode || 'courier_now',
             deliverySlotAt,
             address: fullAddress,
             lat: form.lat,
@@ -629,114 +617,56 @@ async function submit() {
                     Способ доставки
                 </legend>
                 <div role="radiogroup" aria-label="Способ доставки" class="grid grid-cols-1 gap-2">
-                    <!-- Курьером сейчас — скидка привязана именно к этому способу.
-                         div[role=radio], а не <button>, т.к. внутри есть вложенная кнопка «Добавить». -->
-                    <div role="radio" :aria-checked="form.delivery === 'courier_now'"
-                         tabindex="0"
-                         @click="form.delivery = 'courier_now'"
-                         @keydown.space.prevent="form.delivery = 'courier_now'"
-                         @keydown.enter.prevent="form.delivery = 'courier_now'"
-                         class="min-h-16 rounded-2xl border-2 flex items-start gap-3 px-4 py-3 text-left transition cursor-pointer select-none"
-                         :class="form.delivery === 'courier_now'
-                             ? 'bg-ink text-bg border-ink'
-                             : 'bg-sf text-ink border-ln2'">
-                        <!-- Визуальный radio -->
+                    <div v-if="!catalog.deliveryMethods?.length"
+                         class="rounded-2xl border-2 border-dashed border-ln2 bg-sf px-4 py-4 text-center text-[13px] text-mut">
+                        Способы доставки не настроены. Обратитесь в магазин.
+                    </div>
+                    <button v-for="m in (catalog.deliveryMethods || [])" :key="m.code"
+                            type="button" role="radio" :aria-checked="form.deliveryMethodCode === m.code"
+                            @click="form.deliveryMethodCode = m.code"
+                            class="min-h-16 rounded-2xl border-2 flex items-start gap-3 px-4 py-3 text-left transition cursor-pointer select-none"
+                            :class="form.deliveryMethodCode === m.code
+                                ? 'bg-ink text-bg border-ink'
+                                : 'bg-sf text-ink border-ln2'">
                         <span aria-hidden="true"
                               class="shrink-0 size-6 mt-0.5 rounded-full border-2 flex items-center justify-center transition"
-                              :class="form.delivery === 'courier_now' ? 'border-bg' : 'border-ln2'">
-                            <span v-if="form.delivery === 'courier_now'"
+                              :class="form.deliveryMethodCode === m.code ? 'border-bg' : 'border-ln2'">
+                            <span v-if="form.deliveryMethodCode === m.code"
                                   class="size-3 rounded-full bg-bg"></span>
                         </span>
-                        <span class="flex-1 min-w-0 flex flex-col gap-1.5">
-                            <span class="flex items-center gap-2">
-                                <span class="font-extrabold text-[14px]">
-                                    Курьером прямо сейчас
+                        <span class="flex-1 min-w-0 flex flex-col gap-0.5">
+                            <span class="flex items-center gap-2 flex-wrap">
+                                <span class="font-extrabold text-[14px]">{{ m.name }}</span>
+                                <span v-if="m.price" class="shrink-0 bg-acc text-white font-extrabold text-[11px] tracking-wider uppercase px-2 py-0.5 rounded-full">
+                                    +{{ fmt(m.price) }}
                                 </span>
-                                <span v-if="potentialTier"
-                                      class="shrink-0 bg-acc text-white font-extrabold text-[11px] tracking-wider uppercase px-2 py-0.5 rounded-full">
-                                    −{{ potentialTier.percent }}%
-                                </span>
-                            </span>
-                            <span class="text-[12px] opacity-80">
-                                Отправим через Яндекс Доставку<span v-if="potentialTier && !activeTier"> · при этом способе скидка −{{ potentialTier.percent }}% на весь чек</span>
-                            </span>
-
-                            <!-- Активная скидка — крупным, с указанием «Ваша скидка» и суммой экономии. -->
-                            <span v-if="activeTier"
-                                  class="self-start inline-flex items-center gap-2 rounded-xl bg-acc text-white font-extrabold text-[13px] px-3 py-1.5 shadow-[0_6px_16px_-6px_rgba(214,58,28,0.55)]">
-                                <span class="pi pi-check-circle text-[14px]"></span>
-                                <span>
-                                    Ваша скидка −{{ activeTier.percent }}%
-                                    <span class="opacity-90 font-bold">· −{{ fmt(cartDiscountAmount) }}</span>
+                                <!-- Превью скидки — активный чипс если порог достигнут, тусклый если нет. -->
+                                <span v-if="m.preview" class="shrink-0 font-extrabold text-[11px] tracking-wider uppercase px-2 py-0.5 rounded-full inline-flex items-center gap-1"
+                                      :class="(m.preview.minSubtotal && cart.subtotal < m.preview.minSubtotal)
+                                        ? 'bg-ln2 text-ink/60'
+                                        : 'bg-btr text-ink'">
+                                    <span class="pi pi-tag text-[10px]"></span>
+                                    <template v-if="m.preview.benefitType === 'percent'">−{{ m.preview.benefitValue }}%</template>
+                                    <template v-else-if="m.preview.benefitType === 'fixed_amount'">−{{ fmt(m.preview.benefitValue) }}</template>
+                                    <template v-else>{{ fmt(m.preview.benefitValue) }}</template>
                                 </span>
                             </span>
-
-                            <!-- Подсказка следующего тарифа + кнопка «Добавить» рядом -->
-                            <span v-if="nextTier"
-                                  class="self-start flex items-center gap-1.5 flex-wrap">
-                                <span class="rounded-lg bg-acc/15 text-acc font-bold text-[11px] px-2 py-1 leading-snug">
-                                    Добавьте ещё {{ fmt(nextTier.minTotal - cart.total) }} —
-                                    скидка <b>−{{ nextTier.percent }}%</b> на весь чек
-                                </span>
-                                <button type="button"
-                                        @click.stop="showUpsell = true"
-                                        class="shrink-0 inline-flex items-center gap-1 rounded-full bg-acc text-white font-extrabold text-[11px] uppercase tracking-wider px-2.5 py-1 active:scale-95 transition">
-                                    <span class="pi pi-plus text-[10px]"></span>
-                                    Добавить
-                                </button>
+                            <span v-if="m.description" class="text-[12px] opacity-80">{{ m.description }}</span>
+                            <!-- Условие по минимальной сумме — если ещё не достигнута. -->
+                            <span v-if="m.preview?.minSubtotal && cart.subtotal < m.preview.minSubtotal"
+                                  class="text-[11px] font-bold inline-flex items-center gap-1"
+                                  :class="form.deliveryMethodCode === m.code ? 'text-btr' : 'text-mut'">
+                                <span class="pi pi-info-circle text-[10px]"></span>
+                                Скидка от {{ fmt(m.preview.minSubtotal) }} · не хватает {{ fmt(m.preview.minSubtotal - cart.subtotal) }}
+                            </span>
+                            <!-- Название скидки + реальная сумма при активном выборе. -->
+                            <span v-else-if="m.preview?.label" class="text-[11px] font-bold text-btr">
+                                {{ m.preview.label }}
+                                <span v-if="form.deliveryMethodCode === m.code && cart.quote?.discountTotal"
+                                      class="opacity-90">· −{{ fmt(cart.quote.discountTotal) }}</span>
                             </span>
                         </span>
-                    </div>
-
-                    <!-- Предзаказ — без скидки, с датой/временем внутри -->
-                    <div class="rounded-2xl border-2 transition overflow-hidden"
-                         :class="form.delivery === 'preorder'
-                             ? 'bg-ink text-bg border-ink'
-                             : 'bg-sf text-ink border-ln2'">
-                        <button type="button" role="radio" :aria-checked="form.delivery === 'preorder'"
-                                @click="form.delivery = 'preorder'"
-                                class="w-full min-h-16 flex items-center gap-3 px-4 py-3 text-left bg-transparent border-0 cursor-pointer">
-                            <span aria-hidden="true"
-                                  class="shrink-0 size-6 rounded-full border-2 flex items-center justify-center transition"
-                                  :class="form.delivery === 'preorder' ? 'border-bg' : 'border-ln2'">
-                                <span v-if="form.delivery === 'preorder'"
-                                      class="size-3 rounded-full bg-bg"></span>
-                            </span>
-                            <span class="flex-1 min-w-0 flex flex-col gap-0.5">
-                                <span class="font-extrabold text-[14px]">Предзаказ</span>
-                                <span class="text-[12px] opacity-80">выбрать дату и время · без скидки чека</span>
-                            </span>
-                            <span class="shrink-0 pi pi-calendar text-[18px] opacity-70"></span>
-                        </button>
-
-                        <!-- Обязательные поля даты/времени — внутри блока «Предзаказ» -->
-                        <div v-if="form.delivery === 'preorder'"
-                             class="px-4 pb-4 pt-1 grid grid-cols-2 gap-2">
-                            <div class="flex flex-col gap-1">
-                                <label class="font-bold text-[12px] opacity-80 uppercase tracking-wider">
-                                    Дата <span class="text-acc">*</span>
-                                </label>
-                                <DatePicker v-model="form.preorderDate" showIcon :minDate="minDate"
-                                            dateFormat="dd.mm.yy" class="w-full" />
-                            </div>
-                            <div class="flex flex-col gap-1">
-                                <label class="font-bold text-[12px] opacity-80 uppercase tracking-wider">
-                                    Время <span class="text-acc">*</span>
-                                </label>
-                                <select v-model="form.preorderTime"
-                                        class="w-full h-[46px] rounded-2xl border-[1.5px] border-ln2 bg-sf px-3 font-bold text-[15px] text-ink">
-                                    <option v-for="h in [10,11,12,13,14,15,16,17,18,19,20,21]" :key="h"
-                                            :value="`${String(h).padStart(2,'0')}:00`">
-                                        {{ String(h).padStart(2, '0') }}:00
-                                    </option>
-                                </select>
-                            </div>
-                            <p v-if="fieldErrors.deliverySlotAt"
-                               class="col-span-2 text-[12px] text-acc font-semibold">
-                                {{ fieldErrors.deliverySlotAt }}
-                            </p>
-                        </div>
-                    </div>
+                    </button>
                 </div>
                 <p v-if="fieldErrors.items" class="text-[12px] text-acc font-semibold">
                     {{ fieldErrors.items }}
@@ -840,14 +770,19 @@ async function submit() {
                     <span class="text-deepmut">Общая сумма</span>
                     <span class="font-bold">{{ fmt(grandTotal + cartDiscountAmount) }}</span>
                 </div>
-                <div v-if="activeTier" class="flex justify-between items-baseline gap-3 text-[14px]">
+                <div v-if="cartDiscountAmount > 0" class="flex justify-between items-baseline gap-3 text-[14px]">
                     <span class="text-btr flex-1 min-w-0">
-                        Скидка на весь чек −{{ activeTier.percent }}%
+                        <template v-if="activeTier">Скидка на весь чек −{{ activeTier.percent }}%</template>
+                        <template v-else>Скидка</template>
                         <span v-if="activeOrderDiscountLabel" class="block text-[11px] font-semibold opacity-80 truncate">
                             {{ activeOrderDiscountLabel }}
                         </span>
                     </span>
                     <span class="font-bold text-btr whitespace-nowrap">− {{ fmt(cartDiscountAmount) }}</span>
+                </div>
+                <div v-if="cart.deliveryFee > 0" class="flex justify-between text-[14px]">
+                    <span class="text-deepmut">Доставка</span>
+                    <span class="font-bold">+ {{ fmt(cart.deliveryFee) }}</span>
                 </div>
                 <div class="h-px bg-[rgba(255,241,220,0.15)]"></div>
                 <div class="flex justify-between items-baseline">

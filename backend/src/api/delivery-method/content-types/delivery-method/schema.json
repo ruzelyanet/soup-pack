@@ -1,0 +1,14 @@
+{
+  "kind": "collectionType",
+  "collectionName": "delivery_methods",
+  "info": { "singularName": "delivery-method", "pluralName": "delivery-methods", "displayName": "Способ доставки" },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "name":        { "type": "string", "required": true },
+    "code":        { "type": "string", "required": true, "unique": true },
+    "active":      { "type": "boolean", "default": true, "required": true },
+    "price":       { "type": "integer", "default": 0 },
+    "sort":        { "type": "integer", "default": 0 },
+    "description": { "type": "text" }
+  }
+}

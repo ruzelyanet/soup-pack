@@ -27,6 +27,8 @@ export type BuildOrderInput = {
     items: OrderLineInput[]
     paymentMethod?: 'cash' | 'card' | 'click' | 'payme' | 'transfer'
     deliveryMethod?: 'courier_now' | 'preorder'
+    /** Код способа доставки из коллекции delivery-method (напр. `yandex`, `courier_now`). */
+    deliveryMethodCode?: string | null
     deliverySlotAt?: string | null
     comment?: string | null
     address?: string | null
@@ -86,9 +88,12 @@ export default factories.createCoreService('api::order.order', ({ strapi }) => (
 
     /** Полный расчёт без сохранения — через pricing.quote. */
     async preview(input: BuildOrderInput) {
+        // Для скидок с фильтром по способу доставки берём код (из сущности delivery-method),
+        // а если не задан — исторический enum `deliveryMethod`.
+        const deliveryMethodCtx = input.deliveryMethodCode || input.deliveryMethod || 'courier_now'
         const q = await strapi.service('api::price.pricing').quote({
             items: legacyItemsToQuoteItems(input.items),
-            deliveryMethod: input.deliveryMethod || 'courier_now',
+            deliveryMethod: deliveryMethodCtx,
             paymentMethod: input.paymentMethod,
             source: 'manual',
         })
@@ -112,10 +117,12 @@ export default factories.createCoreService('api::order.order', ({ strapi }) => (
     async buildAndCreate(input: BuildOrderInput, options: BuildOrderOptions) {
         const phone = requirePhone(input)
         const deliveryMethod = input.deliveryMethod || 'courier_now'
+        const deliveryMethodCode = input.deliveryMethodCode || null
+        const deliveryMethodCtx = deliveryMethodCode || deliveryMethod
 
         const q = await strapi.service('api::price.pricing').quote({
             items: legacyItemsToQuoteItems(input.items),
-            deliveryMethod,
+            deliveryMethod: deliveryMethodCtx,
             paymentMethod: input.paymentMethod,
             source: options.source,
         })
@@ -143,6 +150,7 @@ export default factories.createCoreService('api::order.order', ({ strapi }) => (
             status: 'new',
             paymentMethod: input.paymentMethod || 'cash',
             deliveryMethod,
+            deliveryMethodCode,
             deliverySlotAt: deliveryMethod === 'preorder' ? (input.deliverySlotAt || null) : null,
             comment: input.comment || null,
             ...totalsFromQuote(q),
@@ -219,10 +227,12 @@ export default factories.createCoreService('api::order.order', ({ strapi }) => (
 
         const phone = requirePhone(input)
         const deliveryMethod = input.deliveryMethod || 'courier_now'
+        const deliveryMethodCode = input.deliveryMethodCode ?? before.deliveryMethodCode ?? null
+        const deliveryMethodCtx = deliveryMethodCode || deliveryMethod
 
         const q = await strapi.service('api::price.pricing').quote({
             items: legacyItemsToQuoteItems(input.items),
-            deliveryMethod,
+            deliveryMethod: deliveryMethodCtx,
             paymentMethod: input.paymentMethod,
             source: before.source || 'manual',
         })
@@ -232,6 +242,7 @@ export default factories.createCoreService('api::order.order', ({ strapi }) => (
         const next: Record<string, any> = {
             paymentMethod: input.paymentMethod || before.paymentMethod || 'cash',
             deliveryMethod,
+            deliveryMethodCode,
             deliverySlotAt: deliveryMethod === 'preorder' ? (input.deliverySlotAt || null) : null,
             comment: input.comment ?? null,
             address: input.address ?? null,

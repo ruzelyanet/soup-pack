@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import Button from 'primevue/button'
 import { useToast } from 'primevue/usetoast'
-import type { Order, OrderStatus, Transaction } from '@/services/resources'
+import { DeliveryMethods, type DeliveryMethod, type Order, type OrderStatus, type Transaction } from '@/services/resources'
 import { useAuth } from '@/stores/auth'
 import {
     buildOrderStages, historyLineLabel,
@@ -34,9 +34,21 @@ const emit = defineEmits<{
     (e: 'dispatch'): void
 }>()
 
+const deliveryMethods = ref<DeliveryMethod[]>([])
+onMounted(async () => {
+    try { deliveryMethods.value = (await DeliveryMethods.list({ sort: 'sort:asc' })) as DeliveryMethod[] }
+    catch { /* noop */ }
+})
+
 const dispatchChip = computed(() => {
     const o = props.order
     if (!o) return null
+    if (o.deliveryMethodCode) {
+        const m = deliveryMethods.value.find((x) => x.code === o.deliveryMethodCode)
+        const name = m?.name || o.deliveryMethodCode
+        if (o.employee) return { label: `${name} · ${o.employee.fullName}`, cls: 'bg-ink-900 text-cream-50' }
+        return { label: name, cls: 'bg-ink-900 text-cream-50' }
+    }
     if (o.deliveryBy === 'yandex') return { label: 'Яндекс-доставка', cls: 'bg-ink-100 text-ink-700' }
     if (o.deliveryBy === 'courier' && o.employee) return { label: `Курьер: ${o.employee.fullName}`, cls: 'bg-ink-900 text-cream-50' }
     return null

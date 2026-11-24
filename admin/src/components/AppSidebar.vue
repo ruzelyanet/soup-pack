@@ -74,6 +74,7 @@ const ALL: MenuGroup[] = [
         items: [
             { to: '/request-forms',     icon: 'pi-file-edit', label: 'Формы заявок',    roles: ['manager'] },
             { to: '/settings/sla',      icon: 'pi-send',      label: 'SLA и Telegram',  roles: ['manager'] },
+            { to: '/delivery-methods',  icon: 'pi-truck',     label: 'Способы доставки', roles: ['manager'] },
             { to: '/settings/contacts', icon: 'pi-phone',     label: 'Контакты магазина', roles: ['manager'] },
         ],
     },

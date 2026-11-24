@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCatalog } from '@/stores/catalog'
 import { useAuth } from '@/stores/auth'
@@ -53,6 +53,22 @@ function openSection(s: HomeSection) {
 
 const lastOrder = computed(() => auth.myOrders[0])
 const avatarLetter = computed(() => auth.client?.fullName?.trim()?.[0]?.toUpperCase() || 'А')
+
+// --- Баннеры: индикатор-точки + программный скролл.
+const bannersEl = ref<HTMLDivElement | null>(null)
+const activeBanner = ref(0)
+function onBannersScroll() {
+    const el = bannersEl.value
+    if (!el) return
+    const cardWidth = 340 + 12 // ширина карточки + gap-3
+    activeBanner.value = Math.round(el.scrollLeft / cardWidth)
+}
+function scrollToBanner(idx: number) {
+    const el = bannersEl.value
+    if (!el) return
+    const cardWidth = 340 + 12
+    el.scrollTo({ left: idx * cardWidth, behavior: 'smooth' })
+}
 
 const features = [
     { icon: 'clock', text: 'Готово за 5 минут' },
@@ -120,30 +136,59 @@ function fmt(v: number) {
 
     <!-- Promo banners (из админки) -->
     <section v-if="catalog.banners.length" aria-label="Скидки" class="pt-3">
-        <div class="overflow-x-auto no-scrollbar">
-            <div class="flex gap-2.5 px-4 w-max">
-                <component v-for="b in catalog.banners" :key="b.id"
+        <div ref="bannersEl" class="overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory"
+             @scroll.passive="onBannersScroll">
+            <div class="flex gap-3 px-4 w-max">
+                <component v-for="(b, i) in catalog.banners" :key="b.id"
                            :is="b.linkUrl ? 'a' : 'div'"
                            :href="b.linkUrl || undefined"
-                           class="relative block w-[330px] h-[190px] rounded-[28px] overflow-hidden bg-deep text-deepink no-underline">
-                    <!-- Фон: загруженная картинка или градиент -->
+                           :data-idx="i"
+                           class="group relative block w-[340px] h-[200px] rounded-[28px] overflow-hidden bg-deep text-deepink no-underline snap-start active:scale-[0.98] transition will-change-transform shadow-[0_12px_32px_-14px_rgba(0,0,0,0.35)]">
+                    <!-- Фон: картинка (с мягким zoom-эффектом при hover) или мягкий градиент. -->
                     <img v-if="b.image?.url" :src="mediaUrl(b.image.url)" :alt="b.title"
-                         class="absolute inset-0 w-full h-full object-cover" />
-                    <div v-else class="absolute inset-0 bg-gradient-to-br from-acc to-deep"></div>
-                    <!-- Тёмная подложка для читаемости текста поверх изображения -->
-                    <div v-if="b.image?.url"
-                         class="absolute inset-0 bg-gradient-to-r from-deep/80 via-deep/40 to-transparent"></div>
-                    <!-- Текст -->
-                    <div class="absolute left-5 top-5 w-[220px] flex flex-col gap-2 z-10">
-                        <span class="font-display font-black text-[21px] leading-[1.05]">
-                            {{ b.title }}
-                        </span>
-                        <span v-if="b.subtitle" class="text-[13px] opacity-90 leading-snug">
-                            {{ b.subtitle }}
-                        </span>
+                         class="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-500" />
+                    <div v-else class="absolute inset-0 bg-gradient-to-br from-acc via-acct to-deep"></div>
+
+                    <!-- Градиент для читаемости текста (слева направо, с акцентом снизу). -->
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
+                    <div v-if="b.image?.url" class="absolute inset-0 bg-gradient-to-r from-black/55 via-black/20 to-transparent"></div>
+
+                    <!-- Бейдж скидки / метка кампании -->
+                    <div class="absolute top-4 right-4 inline-flex items-center gap-1 rounded-full bg-acc text-white px-3 py-1 font-extrabold text-[11px] uppercase tracking-wider shadow-[0_6px_16px_-6px_rgba(214,58,28,0.6)]">
+                        <span class="pi pi-tag text-[10px]"></span>
+                        Акция
+                    </div>
+
+                    <!-- Контент: текст сверху-слева, CTA снизу. -->
+                    <div class="absolute inset-0 p-5 flex flex-col justify-between z-10">
+                        <div class="w-[240px] flex flex-col gap-1.5">
+                            <span class="font-display font-black text-[22px] leading-[1.1] text-white drop-shadow-sm">
+                                {{ b.title }}
+                            </span>
+                            <span v-if="b.subtitle" class="text-[13px] text-white/90 leading-snug line-clamp-2">
+                                {{ b.subtitle }}
+                            </span>
+                        </div>
+
+                        <div v-if="b.linkUrl" class="self-start inline-flex items-center gap-1.5 bg-white/95 backdrop-blur font-extrabold text-[12px] uppercase tracking-wider px-3 py-1.5 rounded-full"
+                             style="color: #111">
+                            Подробнее
+                            <span class="pi pi-arrow-right text-[11px]"></span>
+                        </div>
                     </div>
                 </component>
             </div>
+        </div>
+
+        <!-- Индикатор-точки -->
+        <div v-if="catalog.banners.length > 1" class="flex justify-center gap-1.5 pt-2.5">
+            <button v-for="(b, i) in catalog.banners" :key="b.id" type="button"
+                    @click="scrollToBanner(i)"
+                    :aria-label="`Баннер ${i + 1}`"
+                    class="rounded-full transition-all"
+                    :class="activeBanner === i
+                        ? 'w-6 h-1.5 bg-acc'
+                        : 'w-1.5 h-1.5 bg-ln2 hover:bg-mut'"></button>
         </div>
     </section>
 

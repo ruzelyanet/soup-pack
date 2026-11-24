@@ -3,6 +3,22 @@ import { computed, ref } from 'vue'
 import { api, qs } from '@/services/api'
 import type { Banner, Category, HomeSection, OrderSet, Product, ShopContact, SoupVariant } from '@/types'
 
+export interface DeliveryMethodOption {
+    id: number
+    name: string
+    code: string
+    price: number
+    sort: number
+    description?: string | null
+    /** Превью лучшей активной скидки, если есть. */
+    preview?: {
+        benefitType: 'percent' | 'fixed_amount' | 'fixed_price'
+        benefitValue: number
+        label?: string
+        minSubtotal?: number | null
+    } | null
+}
+
 /** По slug подставить SoupPuck variant + tint (на бэке их пока нет). */
 function enrich(p: Product): Product {
     const map: Record<string, { variant: SoupVariant; tint: Product['tint'] }> = {
@@ -23,6 +39,7 @@ export const useCatalog = defineStore('catalog', () => {
     const sets       = ref<OrderSet[]>([])
     const banners    = ref<Banner[]>([])
     const homeSections = ref<HomeSection[]>([])
+    const deliveryMethods = ref<DeliveryMethodOption[]>([])
     const contact    = ref<ShopContact>({ phone: '', workHours: '', city: '' })
     const loading    = ref(false)
     const error      = ref<string | null>(null)
@@ -33,7 +50,7 @@ export const useCatalog = defineStore('catalog', () => {
         loading.value = true
         error.value = null
         try {
-            const [cRes, pRes, sRes, bRes, hRes, ctRes] = await Promise.all([
+            const [cRes, pRes, sRes, bRes, hRes, ctRes, dmRes] = await Promise.all([
                 api.get('/categories' + qs({ sort: 'sort:asc', 'pagination[pageSize]': 100 })),
                 api.get('/products' + qs({
                     populate: ['category', 'image', 'gallery'],
@@ -61,6 +78,11 @@ export const useCatalog = defineStore('catalog', () => {
                     'pagination[pageSize]': 50,
                 })).catch(() => ({ data: { data: [] } })),
                 api.get('/shop-contact').catch(() => ({ data: { data: null } })),
+                api.get('/delivery-methods' + qs({
+                    sort: 'sort:asc',
+                    'filters[active][$eq]': true,
+                    'pagination[pageSize]': 50,
+                })).catch(() => ({ data: { data: [] } })),
             ])
 
             categories.value = (cRes.data?.data ?? []) as Category[]
@@ -76,6 +98,15 @@ export const useCatalog = defineStore('catalog', () => {
                 workHours: ct?.workHours || '',
                 city:      ct?.city      || '',
             }
+            deliveryMethods.value = ((dmRes.data?.data ?? []) as any[]).map((m: any) => ({
+                id: m.id,
+                name: m.name,
+                code: m.code,
+                price: Number(m.price || 0),
+                sort: Number(m.sort || 0),
+                description: m.description || null,
+                preview: m.preview || null,
+            }))
             sets.value = ((sRes.data?.data ?? []) as any[]).map((s: any) => ({
                 id: s.id,
                 name: s.name,
@@ -110,5 +141,5 @@ export const useCatalog = defineStore('catalog', () => {
     // В Nuxt авто-fetch при импорте выполнится на сервере и дважды на клиенте.
     // Подгрузку инициирует plugins/catalog.client.ts или страница через useAsyncData.
 
-    return { categories, products, sets, banners, homeSections, contact, phoneTel, loading, error, fetchAll, findBySlug }
+    return { categories, products, sets, banners, homeSections, deliveryMethods, contact, phoneTel, loading, error, fetchAll, findBySlug }
 })

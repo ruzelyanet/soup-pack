@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useToast } from 'primevue/usetoast'
-import PhoneInput from '@/components/PhoneInput.vue'
-import AddressPicker from '@/components/AddressPicker.vue'
-import { Products, OrderSets, Clients } from '@/services/resources'
+import ClientFormDialog from '@/pages/clients/ClientFormDialog.vue'
+import AutoComplete from 'primevue/autocomplete'
+import { RouterLink } from 'vue-router'
+import { Products, OrderSets, Clients, DeliveryMethods } from '@/services/resources'
 import { StaffOrders, orderErrorText } from '@/services/orders'
 import { mediaUrl } from '@/services/api'
-import type { Client, Order, OrderLine, OrderPreview, OrderSet, Product } from '@/services/resources'
+import type { Client, DeliveryMethod, Order, OrderLine, OrderPreview, OrderSet, Product } from '@/services/resources'
 
 type DeliveryMethod = 'courier_now' | 'preorder'
 type PaymentMethod = 'cash' | 'card' | 'click' | 'payme' | 'transfer'
@@ -42,9 +43,19 @@ const client = reactive({
 const form = reactive({
     paymentMethod: 'transfer' as PaymentMethod,
     deliveryMethod: 'courier_now' as DeliveryMethod,
+    deliveryMethodCode: '' as string,
     deliverySlotAt: null as string | null,
     comment: '',
 })
+
+const deliveryMethodOptions = ref<DeliveryMethod[]>([])
+async function loadDeliveryMethodOptions() {
+    try {
+        const list = (await DeliveryMethods.list({ sort: 'sort:asc', 'filters[active][$ne]': false })) as DeliveryMethod[]
+        deliveryMethodOptions.value = list
+        if (!form.deliveryMethodCode && list.length) form.deliveryMethodCode = list[0].code
+    } catch { /* noop */ }
+}
 
 const cart = ref<Record<string, number>>({})
 
@@ -64,6 +75,53 @@ const saving = ref(false)
 
 const foundClient = ref<(Client & { ordersCount?: number }) | null>(null)
 const lookupState = ref<'idle' | 'loading' | 'found' | 'new'>('idle')
+
+// --- Поиск и выбор клиента ---
+const selectedClient = ref<Client | null>(null)
+const clientSuggestions = ref<Client[]>([])
+const clientDialog = ref(false)
+
+async function onClientSearch(e: { query: string }) {
+    const q = (e.query || '').trim()
+    if (!q || q.length < 2) { clientSuggestions.value = []; return }
+    try {
+        const res = await Clients.list({
+            filters: { $or: [
+                { fullName: { $containsi: q } },
+                { phone: { $containsi: q } },
+            ] },
+            sort: 'fullName:asc',
+            'pagination[pageSize]': 8,
+        })
+        clientSuggestions.value = res
+    } catch {
+        clientSuggestions.value = []
+    }
+}
+function pickClient(c: Client) {
+    selectedClient.value = c
+    // синхронизируем с внутренним `client` reactive — остальная форма его читает при submit.
+    client.fullName = c.fullName || ''
+    client.phone = c.phone || ''
+    client.address = c.address || ''
+    client.lat = c.lat != null ? Number(c.lat) : null
+    client.lng = c.lng != null ? Number(c.lng) : null
+    foundClient.value = { ...c }
+    lookupState.value = 'found'
+}
+function clearClient() {
+    selectedClient.value = null
+    client.fullName = ''
+    client.phone = ''
+    client.address = ''
+    client.lat = null
+    client.lng = null
+    foundClient.value = null
+    lookupState.value = 'idle'
+}
+function onClientCreated(c: Client) {
+    pickClient(c)
+}
 
 const TONES = [
     { bg: '#f4ead6', ink: '#b03628' },
@@ -326,7 +384,8 @@ function buildPayload() {
         items: buildItems(),
         paymentMethod: form.paymentMethod,
         deliveryMethod: form.deliveryMethod,
-        deliverySlotAt: form.deliveryMethod === 'preorder' ? form.deliverySlotAt : null,
+        deliveryMethodCode: form.deliveryMethodCode || null,
+        deliverySlotAt: null,
         comment: form.comment.trim() || null,
         address: client.address.trim() || null,
         lat: client.lat,
@@ -354,7 +413,7 @@ function schedulePreview() {
     if (previewTimer) window.clearTimeout(previewTimer)
     previewTimer = window.setTimeout(refreshPreview, 250)
 }
-watch([cart, () => form.deliveryMethod, () => form.paymentMethod], schedulePreview, { deep: true })
+watch([cart, () => form.deliveryMethod, () => form.deliveryMethodCode, () => form.paymentMethod], schedulePreview, { deep: true })
 
 function normalizedPhone(raw: string) {
     const d = raw.replace(/\D/g, '')
@@ -420,6 +479,7 @@ function cartFromOrder(o: Order): Record<string, number> {
 }
 
 onMounted(() => {
+    loadDeliveryMethodOptions()
     const o = props.order
     if (o) {
         client.fullName = o.client?.fullName || ''
@@ -427,8 +487,10 @@ onMounted(() => {
         client.address  = o.address || o.client?.address || ''
         client.lat      = o.lat != null ? Number(o.lat) : null
         client.lng      = o.lng != null ? Number(o.lng) : null
+        if (o.client) selectedClient.value = o.client as any
         form.paymentMethod  = (o.paymentMethod as PaymentMethod) || 'cash'
         form.deliveryMethod = (o.deliveryMethod as DeliveryMethod) || 'courier_now'
+        form.deliveryMethodCode = o.deliveryMethodCode || ''
         form.deliverySlotAt = o.deliverySlotAt ? toLocalInput(o.deliverySlotAt) : null
         form.comment        = o.comment || ''
         cart.value = cartFromOrder(o)
@@ -474,11 +536,11 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 
 async function save() {
     if (saving.value) return
-    if (!normalizedPhone(client.phone)) { toast.add({ severity: 'warn', summary: 'Нужен телефон клиента', life: 2500 }); return }
-    if (cartEmpty.value)                 { toast.add({ severity: 'warn', summary: 'Нет позиций в заказе',   life: 2500 }); return }
-    if (form.deliveryMethod === 'preorder' && !form.deliverySlotAt) {
-        toast.add({ severity: 'warn', summary: 'Выберите время предзаказа', life: 2500 }); return
+    if (!selectedClient.value || !normalizedPhone(client.phone)) {
+        toast.add({ severity: 'warn', summary: 'Выберите клиента', life: 2500 })
+        return
     }
+    if (cartEmpty.value)                 { toast.add({ severity: 'warn', summary: 'Нет позиций в заказе',   life: 2500 }); return }
     saving.value = true
     try {
         const payload = buildPayload()
@@ -700,43 +762,58 @@ const modKey = isMac ? '⌘' : 'Ctrl'
 
                     <!-- Клиент -->
                     <section class="bg-white border border-ink-100 rounded-2xl p-4 flex flex-col gap-3">
-                        <h3 class="m-0 font-display text-[15px] font-bold">Клиент</h3>
-                        <label class="flex flex-col gap-1.5 text-xs font-semibold text-ink-500">Телефон
-                            <PhoneInput v-model="client.phone"
-                                        input-class="h-[46px] w-full px-3.5 rounded-xl border border-ink-200 text-base font-medium text-ink-900 focus:outline-none focus:border-ink-900" />
-                        </label>
-                        <div v-if="lookupState === 'found' && foundClient"
+                        <div class="flex items-center justify-between">
+                            <h3 class="m-0 font-display text-[15px] font-bold">Клиент</h3>
+                            <button type="button"
+                                    class="inline-flex items-center gap-1 text-xs font-semibold text-ink-900 hover:text-ink-700"
+                                    @click="clientDialog = true">
+                                <i class="pi pi-user-plus text-xs" /> Создать
+                            </button>
+                        </div>
+
+                        <!-- Выбранный клиент: чипс с крестиком -->
+                        <div v-if="selectedClient"
                              class="flex items-center gap-2.5 px-3 py-2.5 bg-[#f1f3ea] rounded-xl">
-                            <span class="w-[34px] h-[34px] rounded-full bg-olive-500 text-white flex items-center justify-center text-[13px] font-bold">{{ clientInitials }}</span>
+                            <span class="w-[34px] h-[34px] rounded-full bg-olive-500 text-white flex items-center justify-center text-[13px] font-bold">
+                                {{ (selectedClient.fullName || '').split(/\s+/).filter(Boolean).slice(0,2).map((w) => w[0].toUpperCase()).join('') || '—' }}
+                            </span>
                             <div class="flex flex-col min-w-0 flex-1">
-                                <span class="text-sm font-semibold truncate">{{ foundClient.fullName || 'Без имени' }}</span>
-                                <span class="text-xs text-[#4a5530]">
-                                    {{ foundClient.ordersCount ? `${foundClient.ordersCount} ${plural(foundClient.ordersCount, 'заказ', 'заказа', 'заказов')}` : 'Заказов ещё не было' }}
-                                </span>
+                                <span class="text-sm font-semibold truncate">{{ selectedClient.fullName || 'Без имени' }}</span>
+                                <span class="text-xs text-[#4a5530]">{{ selectedClient.phone }}</span>
                             </div>
+                            <button type="button" class="size-7 rounded-full hover:bg-ink-100 text-ink-500 flex items-center justify-center"
+                                    title="Сбросить"
+                                    @click="clearClient">
+                                <i class="pi pi-times text-xs" />
+                            </button>
                         </div>
-                        <div v-else-if="lookupState === 'new'" class="text-xs text-ink-500 flex items-center gap-1.5">
-                            <i class="pi pi-user-plus text-xs"></i> Новый клиент — будет создан вместе с заказом
-                        </div>
-                        <label class="flex flex-col gap-1.5 text-xs font-semibold text-ink-500">Имя
-                            <input v-model="client.fullName" placeholder="Как обращаться"
-                                   class="h-[46px] px-3.5 rounded-xl border border-ink-200 text-[15px] text-ink-900 focus:outline-none focus:border-ink-900" />
-                        </label>
-                        <AddressPicker v-model="client.address"
-                                       v-model:lat="client.lat"
-                                       v-model:lng="client.lng"
-                                       label="Адрес доставки"
-                                       placeholder="Улица, дом, квартира" />
-                        <div class="grid grid-cols-2 gap-1.5 p-1 bg-ink-50 rounded-xl">
-                            <button v-for="d in ([['courier_now', 'Курьер сейчас'], ['preorder', 'Предзаказ']] as const)" :key="d[0]"
-                                    type="button" :aria-pressed="form.deliveryMethod === d[0]"
-                                    class="h-10 rounded-[9px] text-sm font-semibold transition"
-                                    :class="form.deliveryMethod === d[0] ? 'bg-white text-ink-900 shadow-sm' : 'text-ink-500'"
-                                    @click="form.deliveryMethod = d[0]">{{ d[1] }}</button>
-                        </div>
-                        <input v-if="form.deliveryMethod === 'preorder'" v-model="form.deliverySlotAt" type="datetime-local"
-                               aria-label="Время предзаказа"
-                               class="h-[46px] px-3.5 rounded-xl border border-ink-200 text-[15px] focus:outline-none focus:border-ink-900" />
+
+                        <!-- Поиск клиента: AutoComplete с клавиатурной навигацией -->
+                        <AutoComplete v-else
+                                      :model-value="null"
+                                      :suggestions="clientSuggestions"
+                                      option-label="fullName"
+                                      :min-length="2"
+                                      :delay="300"
+                                      placeholder="Поиск клиента: имя или телефон"
+                                      empty-search-message="Не найдено. Нажмите «Создать» сверху."
+                                      fluid
+                                      complete-on-focus
+                                      @complete="onClientSearch"
+                                      @option-select="(e: any) => pickClient(e.value)">
+                            <template #option="{ option }">
+                                <div class="flex items-center gap-2.5 py-0.5">
+                                    <span class="w-[30px] h-[30px] rounded-full bg-olive-500 text-white flex items-center justify-center text-xs font-bold shrink-0">
+                                        {{ (option.fullName || '').split(/\s+/).filter(Boolean).slice(0,2).map((w: string) => w[0].toUpperCase()).join('') || '—' }}
+                                    </span>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="font-semibold text-sm truncate">{{ option.fullName || 'Без имени' }}</div>
+                                        <div class="text-xs text-ink-400">{{ option.phone }}</div>
+                                    </div>
+                                </div>
+                            </template>
+                        </AutoComplete>
+
                     </section>
 
                     <!-- Состав -->
@@ -814,6 +891,26 @@ const modKey = isMac ? '⌘' : 'Ctrl'
                         </div>
                     </section>
 
+                    <!-- Способ доставки -->
+                    <section class="bg-white border border-ink-100 rounded-2xl p-4 flex flex-col gap-3">
+                        <h3 class="m-0 font-display text-[15px] font-bold">Способ доставки</h3>
+                        <div v-if="!deliveryMethodOptions.length" class="text-xs text-ink-400">
+                            Нет способов — <RouterLink to="/delivery-methods" class="text-ink-900 no-underline font-semibold">создайте в настройках</RouterLink>.
+                        </div>
+                        <div v-else class="flex flex-wrap gap-1.5">
+                            <button v-for="m in deliveryMethodOptions" :key="m.code" type="button"
+                                    :aria-pressed="form.deliveryMethodCode === m.code"
+                                    class="h-11 px-3.5 rounded-xl text-sm font-semibold border transition"
+                                    :class="form.deliveryMethodCode === m.code
+                                        ? 'bg-ink-900 border-ink-900 text-white'
+                                        : 'bg-white border-ink-200 text-ink-700 hover:border-ink-400'"
+                                    @click="form.deliveryMethodCode = m.code">
+                                {{ m.name }}
+                                <span v-if="m.price" class="text-xs opacity-75 ml-1">+{{ fmt(m.price) }}</span>
+                            </button>
+                        </div>
+                    </section>
+
                     <!-- Оплата -->
                     <section class="bg-white border border-ink-100 rounded-2xl p-4 flex flex-col gap-3">
                         <h3 class="m-0 font-display text-[15px] font-bold">Оплата</h3>
@@ -857,6 +954,8 @@ const modKey = isMac ? '⌘' : 'Ctrl'
             </aside>
         </div>
     </div>
+
+    <ClientFormDialog v-model:visible="clientDialog" :client="null" @saved="onClientCreated" />
 </template>
 
 <style scoped>

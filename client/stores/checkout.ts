@@ -4,7 +4,7 @@ import { reactive, watch } from 'vue'
 const STORAGE_KEY = 'souppack.checkout.v1'
 
 export type PayMethod = 'cash' | 'card' | 'click' | 'payme' | 'transfer'
-export type DeliveryMethod = 'courier_now' | 'preorder'
+export type DeliveryMethod = 'courier_now'
 
 export interface CheckoutForm {
     /** Локально отформатированный номер без «+998», как в инпуте (`90 000 00 00`). */
@@ -18,8 +18,7 @@ export interface CheckoutForm {
     floor: string
     comment: string
     delivery: DeliveryMethod
-    preorderDate: Date | null
-    preorderTime: string
+    deliveryMethodCode: string
     pay: PayMethod
 }
 
@@ -35,25 +34,18 @@ function defaults(): CheckoutForm {
         floor: '',
         comment: '',
         delivery: 'courier_now',
-        preorderDate: null,
-        preorderTime: '12:00',
-        pay: 'card',
+        deliveryMethodCode: 'courier_now',
+        pay: 'cash',
     }
 }
 
-/** Прочитать форму из localStorage. Date десериализуем из ISO. */
 function readStorage(): CheckoutForm {
     if (!import.meta.client) return defaults()
     try {
         const raw = localStorage.getItem(STORAGE_KEY)
         if (!raw) return defaults()
-        const parsed = JSON.parse(raw) as Partial<CheckoutForm> & { preorderDate?: string | null }
-        const d = defaults()
-        return {
-            ...d,
-            ...parsed,
-            preorderDate: parsed.preorderDate ? new Date(parsed.preorderDate as any) : null,
-        }
+        const parsed = JSON.parse(raw) as Partial<CheckoutForm>
+        return { ...defaults(), ...parsed, delivery: 'courier_now' }
     } catch {
         return defaults()
     }

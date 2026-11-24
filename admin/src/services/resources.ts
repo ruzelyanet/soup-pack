@@ -48,7 +48,25 @@ export interface Employee extends Base {
 export interface Client extends Base {
     fullName: string; phone: string; address?: string
     lat?: number | null; lng?: number | null
+    birthDate?: string | null
+    gender?: 'male' | 'female' | null
+    telegramUsername?: string | null
+    isWholesale?: boolean
+    source?: string | null
+    photo?: { id: number; url: string } | null
     orders?: Order[]
+}
+
+export interface ClientStats {
+    totalCount: number
+    totalAmount: number
+    avgCheck: number
+    lastPurchaseAt: string | null
+    months: Array<{ ym: string; label: string; count: number; amount: number }>
+}
+export async function getClientStats(documentId: string): Promise<ClientStats> {
+    const res = await api.get(`/clients/${documentId}/stats`)
+    return res.data?.data as ClientStats
 }
 export type OrderStatus = 'new' | 'accepted' | 'in_progress' | 'done' | 'canceled'
 export interface OrderLineDiscountSnapshot {
@@ -88,6 +106,7 @@ export interface Order extends Base {
     code: string; status: OrderStatus; cancelReason?: string
     paymentMethod?: 'cash' | 'card' | 'click' | 'payme' | 'transfer'
     deliveryMethod?: 'courier_now' | 'preorder'
+    deliveryMethodCode?: string | null
     deliveryBy?: 'courier' | 'yandex' | null
     deliverySlotAt?: string | null
     comment?: string
@@ -192,10 +211,24 @@ export interface DashboardData {
     receiptsTotal: number
     paymentsSum: number
     refundsSum: number
+    ordersCount: number
+    canceledCount: number
+    avgCheck: number
+    clientsCount: number
 }
 
 // Админка ходит через staff-прокси — там is-staff policy спуфит ctx.state.auth
 // под full-access, поэтому strictRelations не отрезает populate.
+export interface DeliveryMethod extends Base {
+    name: string
+    code: string
+    active: boolean
+    price?: number
+    sort?: number
+    description?: string | null
+}
+export const DeliveryMethods = resource<DeliveryMethod>('delivery-methods')
+
 export const Categories = resource<Category>('staff/categories')
 export const Products   = resource<Product>('staff/products')
 export const Banners    = resource<Banner>('staff/banners')
@@ -225,9 +258,9 @@ export async function getEmployeeStats(documentId: string): Promise<EmployeeStat
 }
 
 // --- Order dispatch (manager/duty) + courier actions ---
-export async function dispatchOrder(documentId: string, deliveryBy: 'courier' | 'yandex', employeeDocId?: string | null) {
+export async function dispatchOrder(documentId: string, deliveryMethodCode: string, employeeDocId?: string | null) {
     const res = await api.post(`/staff/orders/${documentId}/dispatch`, {
-        data: { deliveryBy, employeeDocId: employeeDocId ?? null },
+        data: { deliveryMethodCode, employeeDocId: employeeDocId ?? null },
     })
     return res.data?.data as Order
 }

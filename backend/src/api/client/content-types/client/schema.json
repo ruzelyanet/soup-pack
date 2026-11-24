@@ -4,11 +4,17 @@
   "info": { "singularName": "client", "pluralName": "clients", "displayName": "Клиент" },
   "options": { "draftAndPublish": false },
   "attributes": {
-    "fullName": { "type": "string" },
-    "phone":    { "type": "string", "required": true, "unique": true },
-    "address":  { "type": "string" },
-    "lat":      { "type": "decimal" },
-    "lng":      { "type": "decimal" },
-    "orders":   { "type": "relation", "relation": "oneToMany", "target": "api::order.order", "mappedBy": "client" }
+    "fullName":          { "type": "string" },
+    "phone":             { "type": "string", "required": true, "unique": true },
+    "address":           { "type": "string" },
+    "lat":               { "type": "decimal" },
+    "lng":               { "type": "decimal" },
+    "birthDate":         { "type": "date" },
+    "gender":            { "type": "enumeration", "enum": ["male", "female"] },
+    "telegramUsername":  { "type": "string" },
+    "isWholesale":       { "type": "boolean", "default": false },
+    "source":            { "type": "string" },
+    "photo":             { "type": "media", "multiple": false, "allowedTypes": ["images"] },
+    "orders":            { "type": "relation", "relation": "oneToMany", "target": "api::order.order", "mappedBy": "client" }
   }
 }

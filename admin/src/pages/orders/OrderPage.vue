@@ -13,6 +13,7 @@ import OrderDetails from './components/OrderDetails.vue'
 import CancelOrderDialog from './components/CancelOrderDialog.vue'
 import AcceptPaymentDialog from './components/AcceptPaymentDialog.vue'
 import RefundDialog from './components/RefundDialog.vue'
+import DispatchDialog from './components/DispatchDialog.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -28,6 +29,7 @@ const notFound = ref(false)
 const banner = ref<{ text: string } | null>(null)
 
 const cancelOpen = ref(false)
+const dispatchOpen = ref(false)
 const payOpen = ref(false)
 const refundOpen = ref(false)
 const menuOpen = ref(false)
@@ -283,11 +285,13 @@ const createdLabel = computed(() => {
                           @cancel="cancelOpen = true"
                           @pay-open="payOpen = true" @refund-open="refundOpen = true"
                           @cancel-txn="cancelTxn" @banner-close="banner = null"
-                          @edit="goEdit" />
+                          @edit="goEdit"
+                          @dispatch="dispatchOpen = true" />
         </main>
 
         <CancelOrderDialog v-model:visible="cancelOpen" :order="order" :transactions="txns" @canceled="load(true)" />
         <AcceptPaymentDialog v-model:visible="payOpen" :order="order" @saved="load(true)" />
         <RefundDialog v-model:visible="refundOpen" :order="order" @saved="load(true)" />
+        <DispatchDialog v-model:visible="dispatchOpen" :order="order" @saved="load(true)" />
     </div>
 </template>

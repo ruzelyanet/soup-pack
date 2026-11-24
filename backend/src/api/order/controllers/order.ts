@@ -31,8 +31,6 @@ export default factories.createCoreController('api::order.order', ({ strapi }) =
             const fullName = String(body?.client?.fullName || '').trim()
             const phoneRaw = String(body?.client?.phone || '').trim()
             const address  = String(body?.client?.address || body?.address || '').trim()
-            const delivery = body?.deliveryMethod as string | undefined
-            const deliverySlotAt = body?.deliverySlotAt as string | null | undefined
 
             if (!fullName) fieldErrors.fullName = 'Укажите имя'
             if (!phoneRaw) {
@@ -44,9 +42,6 @@ export default factories.createCoreController('api::order.order', ({ strapi }) =
                 }
             }
             if (!address) fieldErrors.address = 'Укажите адрес доставки'
-            if (delivery === 'preorder' && !deliverySlotAt) {
-                fieldErrors.deliverySlotAt = 'Выберите дату и время предзаказа'
-            }
             if (!Array.isArray(body?.items) || !body.items.length) {
                 fieldErrors.items = 'Корзина пуста'
             }
@@ -65,8 +60,7 @@ export default factories.createCoreController('api::order.order', ({ strapi }) =
                 },
                 items: body.items,
                 paymentMethod: body.paymentMethod,
-                deliveryMethod: body.deliveryMethod,
-                deliverySlotAt: body.deliverySlotAt,
+                deliveryMethod: 'courier_now',
                 comment: body.comment,
                 address: body.address ?? body.client.address,
                 lat: body.lat ?? body.client.lat,
@@ -188,7 +182,13 @@ export default factories.createCoreController('api::order.order', ({ strapi }) =
             select: ['total'],
             limit: 10000,
         })
+        const ordersCount = orders.length
         const salesTotal = orders.reduce((s: number, o: any) => s + Number(o.total || 0), 0)
+        const avgCheck = ordersCount > 0 ? Math.round(salesTotal / ordersCount) : 0
+        const canceledCount = await strapi.db.query('api::order.order').count({
+            where: { createdAt: { $gte: from, $lte: to }, status: 'canceled' } as any,
+        })
+        const clientsCount = await strapi.db.query('api::client.client').count({})
 
         const txns = await strapi.db.query('api::transaction.transaction').findMany({
             where: {
@@ -218,6 +218,10 @@ export default factories.createCoreController('api::order.order', ({ strapi }) =
                 receiptsTotal,
                 paymentsSum,
                 refundsSum,
+                ordersCount,
+                canceledCount,
+                avgCheck,
+                clientsCount,
             },
         }
     },
@@ -444,22 +448,33 @@ export default factories.createCoreController('api::order.order', ({ strapi }) =
         if (!employee) return ctx.unauthorized()
         const { documentId } = ctx.params
         const body = (ctx.request.body?.data || ctx.request.body) as {
-            deliveryBy?: 'courier' | 'yandex'
+            deliveryMethodCode?: string | null
             employeeDocId?: string | null
         }
-        if (!['courier', 'yandex'].includes(body?.deliveryBy as string)) {
-            return ctx.badRequest('deliveryBy must be "courier" or "yandex"')
+        if (!body?.deliveryMethodCode) return ctx.badRequest('deliveryMethodCode required')
+
+        // Валидируем, что способ существует и активен.
+        const method = await strapi.db.query('api::delivery-method.delivery-method').findOne({
+            where: { code: body.deliveryMethodCode },
+        })
+        if (!method) return ctx.badRequest('unknown deliveryMethodCode')
+        if (method.active === false) return ctx.badRequest('delivery method inactive')
+
+        const data: Record<string, any> = {
+            deliveryMethodCode: body.deliveryMethodCode,
         }
-        const data: Record<string, any> = { deliveryBy: body.deliveryBy }
-        if (body.deliveryBy === 'courier') {
-            if (!body.employeeDocId) return ctx.badRequest('employeeDocId required for courier')
+
+        if (body.employeeDocId) {
             const target = await strapi.documents('api::employee.employee').findOne({ documentId: body.employeeDocId })
             if (!target || target.role !== 'courier') return ctx.badRequest('employee must be courier')
             if (target.active === false) return ctx.badRequest('courier inactive')
             data.employee = target.id
+            data.deliveryBy = 'courier'
         } else {
             data.employee = null
+            data.deliveryBy = body.deliveryMethodCode === 'yandex' ? 'yandex' : null
         }
+
         const updated = await strapi.documents('api::order.order').update({
             documentId,
             data,
@@ -469,7 +484,7 @@ export default factories.createCoreController('api::order.order', ({ strapi }) =
         try {
             await strapi.service('api::order.order').logEvent(
                 (updated as any).id, 'dispatched',
-                { deliveryBy: body.deliveryBy, employeeId: data.employee ?? null },
+                { deliveryMethodCode: body.deliveryMethodCode, employeeId: data.employee ?? null },
                 employee.id,
             )
         } catch (e: any) {

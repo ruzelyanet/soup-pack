@@ -1,14 +1,21 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import AppTopbar from '@/components/AppTopbar.vue'
+import ClientFormDialog from './ClientFormDialog.vue'
 import { Clients, Orders, type Client, type Order } from '@/services/resources'
+import { mediaUrl } from '@/services/api'
 import DataTable from 'primevue/datatable'
 import { PAGINATOR_TEMPLATE, PAGINATOR_REPORT, PAGE_SIZE_OPTIONS, DEFAULT_PAGE_SIZE as PAGE_SIZE } from '@/utils/paginator'
 import Column from 'primevue/column'
+import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import IconField from 'primevue/iconfield'
 import InputIcon from 'primevue/inputicon'
 import FloatLabel from 'primevue/floatlabel'
+
+const router = useRouter()
+const dialog = ref(false)
 
 const search = ref('')
 const list = ref<Client[]>([])
@@ -19,6 +26,18 @@ const err = ref<string | null>(null)
 const page = ref(0)
 const pageSize = ref(PAGE_SIZE)
 const total = ref(0)
+const newThisMonthCount = ref(0)
+
+async function loadTopStats() {
+    const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
+    try {
+        const res = await Clients.listPaged({
+            'filters[createdAt][$gte]': monthStart,
+            'pagination[pageSize]': 1,
+        })
+        newThisMonthCount.value = res.meta.pagination.total
+    } catch { newThisMonthCount.value = 0 }
+}
 
 async function load() {
     loading.value = true
@@ -32,6 +51,7 @@ async function load() {
             Clients.listPaged({
                 sort: 'id:desc',
                 filters,
+                populate: ['photo'],
                 'pagination[page]': page.value + 1,
                 'pagination[pageSize]': pageSize.value,
             }),
@@ -51,7 +71,7 @@ async function load() {
     }
 }
 
-onMounted(load)
+onMounted(() => { load(); loadTopStats() })
 
 let searchDebounce: number | null = null
 watch(search, () => {
@@ -76,15 +96,64 @@ const rows = computed(() =>
 function fmt(v: number) {
     return new Intl.NumberFormat('ru-RU').format(v) + ' сум'
 }
+function fmtNum(v: number) {
+    return new Intl.NumberFormat('ru-RU').format(Math.round(v))
+}
+
+const totalPurchasesCount = computed(() =>
+    allOrders.value.filter((o) => o.status !== 'canceled').length,
+)
 </script>
 
 <template>
-    <AppTopbar title="Клиенты" subtitle="Автоматически из заказов" />
+    <AppTopbar title="Клиенты" subtitle="Автоматически из заказов">
+        <template #actions>
+            <Button icon="pi pi-plus" label="Клиент" severity="primary" rounded @click="dialog = true" />
+        </template>
+    </AppTopbar>
 
     <div class="p-8 space-y-4">
         <div v-if="err" class="bg-tomato-500/10 text-tomato-600 rounded-xl p-4 text-sm">
             {{ err }}
         </div>
+
+        <!-- TOP STATS -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="bg-white rounded-2xl p-5 flex items-center gap-4">
+                <div class="size-12 rounded-xl bg-emerald-500/15 text-emerald-600 flex items-center justify-center shrink-0">
+                    <i class="pi pi-users text-xl" />
+                </div>
+                <div>
+                    <div class="text-sm text-ink-400">Всего клиентов</div>
+                    <div class="mt-0.5 font-display font-black text-2xl">
+                        {{ total }} <span class="text-sm text-ink-400 font-semibold">клиент</span>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-2xl p-5 flex items-center gap-4">
+                <div class="size-12 rounded-xl bg-saffron-300/40 text-saffron-500 flex items-center justify-center shrink-0">
+                    <i class="pi pi-user-plus text-xl" />
+                </div>
+                <div>
+                    <div class="text-sm text-ink-400">Новых за месяц</div>
+                    <div class="mt-0.5 font-display font-black text-2xl">
+                        {{ newThisMonthCount }} <span class="text-sm text-ink-400 font-semibold">клиент</span>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-2xl p-5 flex items-center gap-4">
+                <div class="size-12 rounded-xl bg-emerald-500/15 text-emerald-600 flex items-center justify-center shrink-0">
+                    <i class="pi pi-shopping-cart text-xl" />
+                </div>
+                <div>
+                    <div class="text-sm text-ink-400">Всего покупок</div>
+                    <div class="mt-0.5 font-display font-black text-2xl">
+                        {{ totalPurchasesCount }} <span class="text-sm text-ink-400 font-semibold">покупок</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="bg-white rounded-2xl p-4 flex flex-wrap items-center gap-3">
             <div class="flex-1 min-w-[260px]">
                 <FloatLabel variant="on">
@@ -107,11 +176,22 @@ function fmt(v: number) {
                        :rows-per-page-options="PAGE_SIZE_OPTIONS"
                        :paginator-template="PAGINATOR_TEMPLATE"
                        :current-page-report-template="PAGINATOR_REPORT"
-                       @page="(ev: any) => { page = ev.page; pageSize = ev.rows }">
+                       @page="(ev: any) => { page = ev.page; pageSize = ev.rows }"
+                       @row-click="(e: any) => router.push(`/clients/${e.data.documentId}`)"
+                       :pt="{ bodyRow: { class: 'cursor-pointer' } }">
                 <Column header="Клиент">
                     <template #body="{ data }">
-                        <div class="font-semibold">{{ data.fullName }}</div>
-                        <div class="text-xs text-ink-400">{{ data.phone }}</div>
+                        <div class="flex items-center gap-3">
+                            <img v-if="data.photo?.url" :src="mediaUrl(data.photo.url)" alt=""
+                                 class="size-9 rounded-full object-cover" />
+                            <div v-else class="size-9 rounded-full bg-teal-500/15 text-teal-600 flex items-center justify-center text-xs font-bold">
+                                {{ (data.fullName || '').split(' ').map((p: string) => p[0]).slice(0,2).join('').toUpperCase() || '—' }}
+                            </div>
+                            <div>
+                                <div class="font-semibold">{{ data.fullName }}</div>
+                                <div class="text-xs text-ink-400">{{ data.phone }}</div>
+                            </div>
+                        </div>
                     </template>
                 </Column>
                 <Column header="Адрес">
@@ -136,4 +216,6 @@ function fmt(v: number) {
             </DataTable>
         </div>
     </div>
+
+    <ClientFormDialog v-model:visible="dialog" :client="null" @saved="(c) => router.push(`/clients/${c.documentId}`)" />
 </template>

@@ -38,6 +38,8 @@ export interface QuoteSnapshot {
     subtotal: number
     discountTotal: number
     total: number
+    deliveryFee: number
+    grandTotal: number
     appliedDiscounts: Array<{ discountId: number; name: string; publicLabel?: string | null; amount: number }>
     hints: Array<{ code: 'NEXT_TIER'; discountId: number; missing: number; label: string }>
 }
@@ -97,6 +99,8 @@ export const useCart = defineStore('cart', () => {
     const subtotal = computed(() => quote.value?.subtotal ?? 0)
     const total = computed(() => quote.value?.total ?? 0)
     const discountTotal = computed(() => quote.value?.discountTotal ?? 0)
+    const deliveryFee = computed(() => quote.value?.deliveryFee ?? 0)
+    const grandTotal = computed(() => quote.value?.grandTotal ?? (quote.value?.total ?? 0))
     const hints = computed(() => quote.value?.hints ?? [])
     const lines = computed<QuoteLineView[]>(() => quote.value?.lines ?? [])
 
@@ -216,7 +220,7 @@ export const useCart = defineStore('cart', () => {
     }
 
     return {
-        items, lines, count, subtotal, total, discountTotal, hints, quote, quoting,
+        items, lines, count, subtotal, total, discountTotal, deliveryFee, grandTotal, hints, quote, quoting,
         qtyOfProduct, standaloneQty,
         addProduct, addSet, setProductQty, setQtyAt, removeAt, clear, setContext, refetch,
     }

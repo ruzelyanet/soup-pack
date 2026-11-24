@@ -3,7 +3,7 @@ import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
 import AppTopbar from '@/components/AppTopbar.vue'
 import { api } from '@/services/api'
-import { Categories, Products, OrderSets, type Discount, type DiscountLevel, type BenefitType, type Category, type Product, type OrderSet } from '@/services/resources'
+import { Categories, Products, OrderSets, DeliveryMethods, type Discount, type DiscountLevel, type BenefitType, type Category, type Product, type OrderSet, type DeliveryMethod } from '@/services/resources'
 import Button from 'primevue/button'
 import Select from 'primevue/select'
 import DatePicker from 'primevue/datepicker'
@@ -98,7 +98,22 @@ const benefitOptions = computed(() => {
     if (form.level === 'order') return line.slice(0, 2).map((b) => b.value === 'fixed_amount' ? { ...b, hint: '−N сум от суммы заказа' } : b)
     return line
 })
-const deliveryOptions = [{ label: 'Курьером сейчас', value: 'courier_now' }, { label: 'Предзаказ', value: 'preorder' }]
+const deliveryOptions = ref<Array<{ label: string; value: string }>>([])
+async function loadDeliveryOptions() {
+    try {
+        const list = (await DeliveryMethods.list({ sort: 'sort:asc' })) as DeliveryMethod[]
+        deliveryOptions.value = list
+            .filter((m) => m.active !== false)
+            .map((m) => ({ label: m.name, value: m.code }))
+        if (!deliveryOptions.value.length) {
+            // Fallback — старые enum-значения, если сущностей ещё не завели.
+            deliveryOptions.value = [{ label: 'Курьером сейчас', value: 'courier_now' }]
+        }
+    } catch {
+        deliveryOptions.value = [{ label: 'Курьером сейчас', value: 'courier_now' }]
+    }
+}
+onMounted(loadDeliveryOptions)
 const paymentOptions = [
     { label: 'Наличные', value: 'cash' }, { label: 'Карта', value: 'card' },
     { label: 'Click', value: 'click' }, { label: 'Payme', value: 'payme' }, { label: 'Перевод', value: 'transfer' },

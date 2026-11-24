@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import AppTopbar from '@/components/AppTopbar.vue'
-import { Clients, Orders, Products, type DashboardData, type Order, type Product } from '@/services/resources'
+import { Orders, Products, type DashboardData, type Order, type Product } from '@/services/resources'
 import { Settings } from '@/services/settings'
 import { useOrdersFeed } from '@/stores/ordersFeed'
 
 const orders = ref<Order[]>([])
 const products = ref<Product[]>([])
-const clientsCount = ref(0)
 const dashboardData = ref<DashboardData | null>(null)
 const loading = ref(true)
 const err = ref<string | null>(null)
@@ -23,15 +22,14 @@ function fmt(v: number) {
 
 async function fetchData() {
     try {
-        const [o, p, c, d] = await Promise.all([
+        const [o, p, d] = await Promise.all([
+            // Нужны только для «Хиты продаж» и «Последние заказы».
             Orders.list({ sort: 'createdAt:desc', populate: ['items'] }),
             Products.list({ sort: 'id:asc' }),
-            Clients.list({ 'pagination[pageSize]': 1 }),
             Settings.dashboard().catch(() => null),
         ])
         orders.value = o
         products.value = p
-        clientsCount.value = c.length
         dashboardData.value = d
         lastRefreshAt = Date.now()
     } catch (e: any) {
@@ -65,16 +63,6 @@ onBeforeUnmount(() => {
     for (const off of offs) try { off() } catch { /* noop */ }
 })
 
-const stats = computed(() => {
-    const o = orders.value
-    const todayOrders = o.length
-    const revenue = o
-        .filter((x) => x.status !== 'canceled')
-        .reduce((s, x) => s + Number(x.total || 0), 0)
-    const avg = Math.round(revenue / Math.max(1, todayOrders))
-    const canceled = o.filter((x) => x.status === 'canceled').length
-    return { todayOrders, revenue, avg, canceled }
-})
 
 const recent = computed(() => orders.value.slice(0, 5))
 
@@ -95,14 +83,12 @@ const topProducts = computed(() => {
 })
 
 const statusLabel: Record<string, string> = {
-    new: 'Новый', accepted: 'Принят', cooking: 'Готовится',
-    delivering: 'В пути', done: 'Доставлен', canceled: 'Отменён',
+    new: 'Новый', accepted: 'Принят', in_progress: 'Готовим', done: 'Доставлен', canceled: 'Отменён',
 }
 const statusColor: Record<string, string> = {
     new: 'bg-saffron-300/20 text-saffron-500',
     accepted: 'bg-olive-500/15 text-olive-500',
-    cooking: 'bg-saffron-300/20 text-saffron-500',
-    delivering: 'bg-primary-100 text-primary-600',
+    in_progress: 'bg-primary-100 text-primary-600',
     done: 'bg-olive-500/15 text-olive-500',
     canceled: 'bg-tomato-500/15 text-tomato-500',
 }
@@ -165,30 +151,30 @@ const statusColor: Record<string, string> = {
             </div>
         </div>
 
-        <!-- KPI -->
+        <!-- KPI (за период из dashboardData) -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-5">
             <div class="bg-white rounded-2xl p-5">
-                <div class="text-xs font-bold uppercase tracking-wider text-ink-400">Заказов всего</div>
+                <div class="text-xs font-bold uppercase tracking-wider text-ink-400">Заказов за период</div>
                 <div class="font-display font-extrabold text-3xl mt-2">
-                    {{ loading ? '…' : stats.todayOrders }}
+                    {{ loading ? '…' : (dashboardData?.ordersCount ?? 0) }}
                 </div>
             </div>
             <div class="bg-white rounded-2xl p-5">
-                <div class="text-xs font-bold uppercase tracking-wider text-ink-400">Выручка</div>
+                <div class="text-xs font-bold uppercase tracking-wider text-ink-400">Выручка за период</div>
                 <div class="font-display font-extrabold text-3xl mt-2">
-                    {{ loading ? '…' : fmt(stats.revenue) }}
+                    {{ loading ? '…' : fmt(dashboardData?.salesTotal ?? 0) }}
                 </div>
             </div>
             <div class="bg-white rounded-2xl p-5">
                 <div class="text-xs font-bold uppercase tracking-wider text-ink-400">Средний чек</div>
                 <div class="font-display font-extrabold text-3xl mt-2">
-                    {{ loading ? '…' : fmt(stats.avg) }}
+                    {{ loading ? '…' : fmt(dashboardData?.avgCheck ?? 0) }}
                 </div>
             </div>
             <div class="bg-white rounded-2xl p-5">
-                <div class="text-xs font-bold uppercase tracking-wider text-ink-400">Отмены</div>
+                <div class="text-xs font-bold uppercase tracking-wider text-ink-400">Отмены за период</div>
                 <div class="font-display font-extrabold text-3xl mt-2 text-tomato-500">
-                    {{ loading ? '…' : stats.canceled }}
+                    {{ loading ? '…' : (dashboardData?.canceledCount ?? 0) }}
                 </div>
             </div>
         </div>
@@ -243,7 +229,7 @@ const statusColor: Record<string, string> = {
         <div class="grid grid-cols-3 gap-5">
             <div class="bg-white rounded-2xl p-5">
                 <div class="text-xs font-bold uppercase tracking-wider text-ink-400">Клиентов в базе</div>
-                <div class="font-display font-extrabold text-2xl mt-2">{{ loading ? '…' : clientsCount }}</div>
+                <div class="font-display font-extrabold text-2xl mt-2">{{ loading ? '…' : (dashboardData?.clientsCount ?? 0) }}</div>
             </div>
             <div class="bg-white rounded-2xl p-5">
                 <div class="text-xs font-bold uppercase tracking-wider text-ink-400">Продуктов в каталоге</div>

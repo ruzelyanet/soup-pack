@@ -1,8 +1,12 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 import Dialog from 'primevue/dialog'
 import Button from 'primevue/button'
-import { Employees, dispatchOrder, type Employee, type Order } from '@/services/resources'
+import Select from 'primevue/select'
+import {
+    DeliveryMethods, Employees, dispatchOrder,
+    type DeliveryMethod, type Employee, type Order,
+} from '@/services/resources'
 import { mediaUrl } from '@/services/api'
 import { useToast } from 'primevue/usetoast'
 
@@ -16,58 +20,56 @@ const emit = defineEmits<{
 }>()
 
 const toast = useToast()
-const mode = ref<'courier' | 'yandex'>('courier')
-const selectedCourierDocId = ref('')
+const methods = ref<DeliveryMethod[]>([])
 const couriers = ref<Employee[]>([])
-const loadingList = ref(false)
+const selectedCode = ref<string>('')
+const selectedCourierDocId = ref<string | null>(null)
+const loading = ref(false)
 const saving = ref(false)
 
-async function loadCouriers() {
-    loadingList.value = true
+async function loadAll() {
+    loading.value = true
     try {
-        const res = await Employees.listPaged({
-            'filters[role][$eq]': 'courier',
-            'filters[active][$ne]': false,
-            populate: ['photo'],
-            sort: 'fullName:asc',
-            'pagination[pageSize]': 100,
-        })
-        couriers.value = res.data
+        const [m, c] = await Promise.all([
+            DeliveryMethods.list({ sort: 'sort:asc', 'filters[active][$ne]': false }),
+            Employees.listPaged({
+                'filters[role][$eq]': 'courier',
+                'filters[active][$ne]': false,
+                populate: ['photo'],
+                sort: 'fullName:asc',
+                'pagination[pageSize]': 100,
+            }),
+        ])
+        methods.value = m as DeliveryMethod[]
+        couriers.value = c.data
     } finally {
-        loadingList.value = false
+        loading.value = false
     }
 }
 
 watch(() => props.visible, (v) => {
     if (!v) return
-    const curDoc = (props.order?.employee as any)?.documentId
-    selectedCourierDocId.value = curDoc || ''
-    mode.value = props.order?.deliveryBy === 'yandex' ? 'yandex' : 'courier'
-    loadCouriers()
+    selectedCode.value = props.order?.deliveryMethodCode || ''
+    selectedCourierDocId.value = (props.order?.employee as any)?.documentId ?? null
+    loadAll()
 })
-
-onMounted(() => { if (props.visible) loadCouriers() })
 
 async function save() {
     if (!props.order) return
-    if (mode.value === 'courier' && !selectedCourierDocId.value) {
-        toast.add({ severity: 'warn', summary: 'Выберите курьера', life: 1800 })
+    if (!selectedCode.value) {
+        toast.add({ severity: 'warn', summary: 'Выберите способ доставки', life: 1800 })
         return
     }
     saving.value = true
     try {
         const updated = await dispatchOrder(
             props.order.documentId,
-            mode.value,
-            mode.value === 'courier' ? selectedCourierDocId.value : null,
+            selectedCode.value,
+            selectedCourierDocId.value || null,
         )
         emit('saved', updated)
         emit('update:visible', false)
-        toast.add({
-            severity: 'success',
-            summary: mode.value === 'yandex' ? 'Яндекс-доставка' : 'Курьер назначен',
-            life: 1800,
-        })
+        toast.add({ severity: 'success', summary: 'Доставка назначена', life: 1800 })
     } catch (e: any) {
         toast.add({ severity: 'error', summary: 'Ошибка', detail: e?.response?.data?.error?.message || e?.message, life: 2500 })
     } finally {
@@ -85,28 +87,34 @@ function initials(name: string | undefined) {
             modal dismissable-mask header="Назначить доставку" :style="{ width: '520px' }"
             :pt="{ root: { class: 'rounded-2xl' } }">
         <div class="space-y-4">
-            <div class="grid grid-cols-2 gap-2">
-                <button type="button"
-                        class="rounded-xl py-3 px-4 border font-semibold transition"
-                        :class="mode === 'courier' ? 'bg-ink-900 text-cream-50 border-ink-900' : 'border-ink-200 hover:border-ink-400'"
-                        @click="mode = 'courier'">
-                    <i class="pi pi-user mr-2" /> Курьер
-                </button>
-                <button type="button"
-                        class="rounded-xl py-3 px-4 border font-semibold transition"
-                        :class="mode === 'yandex' ? 'bg-ink-900 text-cream-50 border-ink-900' : 'border-ink-200 hover:border-ink-400'"
-                        @click="mode = 'yandex'">
-                    <i class="pi pi-truck mr-2" /> Яндекс-доставка
-                </button>
+            <div>
+                <label class="text-xs font-bold uppercase tracking-wider text-ink-400">Способ доставки</label>
+                <Select v-model="selectedCode" :options="methods" option-label="name" option-value="code"
+                        placeholder="Выберите способ…" :loading="loading" fluid class="mt-1" />
+                <div v-if="!loading && !methods.length" class="mt-1 text-xs text-tomato-500">
+                    Нет активных способов. Создайте их в разделе «Способы доставки».
+                </div>
             </div>
 
-            <div v-if="mode === 'courier'" class="space-y-2">
-                <div class="text-xs font-bold uppercase tracking-wider text-ink-400">Выберите курьера</div>
-                <div v-if="loadingList" class="text-sm text-ink-400 py-2">Загрузка…</div>
-                <div v-else-if="!couriers.length" class="text-sm text-ink-400 py-4 text-center">
+            <div v-if="selectedCode">
+                <label class="text-xs font-bold uppercase tracking-wider text-ink-400">
+                    Курьер
+                    <span class="text-ink-300 font-normal normal-case">— опционально</span>
+                </label>
+                <div v-if="!couriers.length" class="mt-1 text-xs text-ink-400">
                     Нет активных курьеров. Добавьте в разделе Сотрудники.
                 </div>
-                <div v-else class="max-h-[320px] overflow-y-auto space-y-1.5">
+                <div v-else class="mt-1 space-y-1.5 max-h-[260px] overflow-y-auto">
+                    <button type="button"
+                            class="w-full text-left rounded-xl p-3 border flex items-center gap-3 transition"
+                            :class="!selectedCourierDocId ? 'border-ink-900 bg-ink-50' : 'border-ink-200 hover:border-ink-400'"
+                            @click="selectedCourierDocId = null">
+                        <div class="size-10 rounded-full bg-ink-100 text-ink-400 flex items-center justify-center shrink-0">
+                            <i class="pi pi-ban" />
+                        </div>
+                        <div class="flex-1 text-sm font-semibold">Без назначения курьера</div>
+                        <i v-if="!selectedCourierDocId" class="pi pi-check text-ink-900" />
+                    </button>
                     <button v-for="c in couriers" :key="c.id" type="button"
                             class="w-full text-left rounded-xl p-3 border flex items-center gap-3 transition"
                             :class="selectedCourierDocId === c.documentId ? 'border-ink-900 bg-ink-50' : 'border-ink-200 hover:border-ink-400'"
@@ -124,16 +132,13 @@ function initials(name: string | undefined) {
                     </button>
                 </div>
             </div>
-
-            <div v-else class="rounded-xl bg-saffron-300/20 p-3 text-sm text-ink-700">
-                Заказ будет помечен как переданный в Яндекс-доставку. Курьерам системы он не придёт.
-            </div>
         </div>
-
         <template #footer>
-            <Button label="Отмена" severity="secondary" text @click="emit('update:visible', false)" />
-            <Button label="Назначить" icon="pi pi-check" severity="primary"
-                    :disabled="saving" @click="save" />
+            <div class="pt-4 flex justify-end gap-2 w-full">
+                <Button label="Отмена" severity="secondary" text @click="emit('update:visible', false)" />
+                <Button label="Назначить" icon="pi pi-check" severity="primary"
+                        :disabled="saving || !selectedCode" @click="save" />
+            </div>
         </template>
     </Dialog>
 </template>
