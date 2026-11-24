@@ -2,7 +2,8 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineNuxtConfig({
     compatibilityDate: '2025-01-01',
-    devtools: { enabled: true },
+    // DevTools-панель только в dev; в prod билде Nuxt её не включает в любом случае.
+    devtools: { enabled: process.env.NODE_ENV !== 'production' },
     modules: ['@pinia/nuxt', '@primevue/nuxt-module'],
 
     css: ['~/assets/css/main.css'],
@@ -45,6 +46,10 @@ export default defineNuxtConfig({
             meta: [
                 { charset: 'utf-8' },
                 { name: 'viewport', content: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover' },
+                { name: 'theme-color', content: '#FFF4E2' },
+            ],
+            link: [
+                { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
             ],
         },
     },
