@@ -9,9 +9,7 @@ const hideBottom = computed(() => Boolean(route.meta?.hideBottom))
             <main class="flex-1 flex flex-col min-w-0 overflow-x-clip">
                 <slot />
             </main>
-            <ClientOnly>
-                <BottomBar v-if="!hideBottom" />
-            </ClientOnly>
+            <BottomBar v-if="!hideBottom" />
         </div>
     </div>
 </template>
