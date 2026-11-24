@@ -19,20 +19,24 @@ function applyTheme(t: Theme) {
 }
 
 export const useUi = defineStore('ui', () => {
-    const theme = ref<Theme>(readTheme())
-
-    applyTheme(theme.value)
+    // На SSR и в первом тике клиента — всегда 'light' (совпадает).
+    const theme = ref<Theme>('light')
 
     function toggleTheme() {
         theme.value = theme.value === 'light' ? 'dark' : 'light'
     }
 
-    watch(theme, (v) => {
-        applyTheme(v)
-        if (import.meta.client) {
+    if (import.meta.client) {
+        // Тему читаем и применяем после гидрации, чтобы не трогать <html data-theme=> до неё.
+        setTimeout(() => {
+            theme.value = readTheme()
+            applyTheme(theme.value)
+        }, 0)
+        watch(theme, (v) => {
+            applyTheme(v)
             try { localStorage.setItem(THEME_KEY, v) } catch { /* ignore */ }
-        }
-    })
+        })
+    }
 
     return { theme, toggleTheme }
 })
