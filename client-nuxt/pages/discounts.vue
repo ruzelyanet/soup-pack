@@ -10,7 +10,7 @@ const router = useRouter()
 const goBack = useGoBack()
 const catalog = useCatalog()
 
-await useAsyncData('catalog', async () => { await catalog.fetchAll(); return true })
+useAsyncData('catalog', async () => { await catalog.fetchAll(); return true })
 
 useSeoMeta({
     title: 'Скидки и акции — SOUP PACK',

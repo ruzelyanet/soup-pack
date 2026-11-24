@@ -15,7 +15,7 @@ const goBack = useGoBack()
 const catalog = useCatalog()
 const cart = useCart()
 
-await useAsyncData('catalog', async () => { await catalog.fetchAll(); return true })
+useAsyncData('catalog', async () => { await catalog.fetchAll(); return true })
 
 const product = computed(() => catalog.findBySlug(route.params.slug as string))
 

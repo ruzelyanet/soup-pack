@@ -16,7 +16,7 @@ const auth = useAuth()
 const ui = useUi()
 const router = useRouter()
 
-await useAsyncData('catalog', async () => { await catalog.fetchAll(); return true })
+useAsyncData('catalog', async () => { await catalog.fetchAll(); return true })
 
 useSeoMeta({
     title: 'SOUP PACK — готовые супы с доставкой в Ташкенте · Том ям, борщ, лагман',
