@@ -120,8 +120,9 @@ function addToCart() {
                      class="absolute top-[42%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[65vw] max-w-[320px] aspect-square object-cover rounded-full"
                      style="box-shadow: 0 0 0 12px rgba(255,255,255,0.65), 0 30px 50px -18px rgba(60,15,0,.7);" />
             </Transition>
-            <SoupPuck v-if="!heroImg" :variant="product.variant ?? 'default'" :size="240" :ring="true" :shadow="true"
-                      class="absolute top-[42%] left-1/2 -translate-x-1/2 -translate-y-1/2" />
+            <div v-if="!heroImg" class="absolute top-[42%] left-1/2 -translate-x-1/2 -translate-y-1/2">
+                <SoupPuck :variant="product.variant ?? 'default'" :size="240" :ring="true" :shadow="true" />
+            </div>
             <!-- Превью картинок — внутри тинт-блока, под кругом -->
             <div v-if="images.length > 1"
                  class="absolute bottom-4 left-0 right-0 z-10 flex justify-center gap-2.5 px-4">
