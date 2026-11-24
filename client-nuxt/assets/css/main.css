@@ -62,7 +62,7 @@ html[data-theme="dark"] {
 
 /* `overflow-x: clip` вместо `hidden` — не создаёт scroll-container,
    `position: sticky` внутри продолжает работать. */
-html, body, #app {
+html, body, #app, #__nuxt {
     height: 100%;
     width: 100%;
     max-width: 100vw;
