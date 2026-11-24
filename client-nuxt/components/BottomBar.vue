@@ -67,9 +67,9 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <div class="sticky bottom-0 z-30 overflow-hidden transition-[max-height] duration-300 ease-out"
-         :style="{ maxHeight: hidden ? '0px' : '260px' }">
-        <div class="flex flex-col gap-2.5 px-3 pt-3">
+    <div class="sticky bottom-0 z-30 overflow-hidden">
+        <div class="flex flex-col gap-2.5 px-3 pt-3 transition-transform duration-300 ease-out"
+             :class="hidden ? 'translate-y-full' : 'translate-y-0'">
         <!-- Floating cart -->
         <button
             v-if="cart.count > 0 && !route.path.startsWith('/cart') && !route.path.startsWith('/checkout')"
