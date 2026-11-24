@@ -437,4 +437,113 @@ export default factories.createCoreController('api::order.order', ({ strapi }) =
             return ctx.internalServerError(err?.message || 'order create failed')
         }
     },
+
+    // --- Dispatch: manager/duty назначает курьера или помечает Яндекс-доставку ---
+    async dispatch(ctx: any) {
+        const employee = ctx.state.employee
+        if (!employee) return ctx.unauthorized()
+        const { documentId } = ctx.params
+        const body = (ctx.request.body?.data || ctx.request.body) as {
+            deliveryBy?: 'courier' | 'yandex'
+            employeeDocId?: string | null
+        }
+        if (!['courier', 'yandex'].includes(body?.deliveryBy as string)) {
+            return ctx.badRequest('deliveryBy must be "courier" or "yandex"')
+        }
+        const data: Record<string, any> = { deliveryBy: body.deliveryBy }
+        if (body.deliveryBy === 'courier') {
+            if (!body.employeeDocId) return ctx.badRequest('employeeDocId required for courier')
+            const target = await strapi.documents('api::employee.employee').findOne({ documentId: body.employeeDocId })
+            if (!target || target.role !== 'courier') return ctx.badRequest('employee must be courier')
+            if (target.active === false) return ctx.badRequest('courier inactive')
+            data.employee = target.id
+        } else {
+            data.employee = null
+        }
+        const updated = await strapi.documents('api::order.order').update({
+            documentId,
+            data,
+            populate: ['employee', 'client', 'items'],
+        })
+        if (!updated) return ctx.notFound()
+        try {
+            await strapi.service('api::order.order').logEvent(
+                (updated as any).id, 'dispatched',
+                { deliveryBy: body.deliveryBy, employeeId: data.employee ?? null },
+                employee.id,
+            )
+        } catch (e: any) {
+            strapi.log.warn('[orders/dispatch.logEvent] ' + (e?.message || e))
+        }
+        ctx.body = { data: updated }
+    },
+
+    // --- Courier: свой список + accept + confirm ---
+    async courierList(ctx: any) {
+        const employee = ctx.state.employee
+        if (!employee) return ctx.unauthorized()
+        const statusParam = String(ctx.query?.status || 'new')
+        const allowed = new Set(['new', 'accepted', 'in_progress', 'done'])
+        if (!allowed.has(statusParam)) return ctx.badRequest('bad status')
+        const page = Math.max(1, Number(ctx.query?.page || 1))
+        const pageSize = Math.min(100, Math.max(1, Number(ctx.query?.pageSize || 25)))
+        const where: any = { employee: { id: employee.id }, status: statusParam }
+        const [rows, total] = await Promise.all([
+            strapi.db.query('api::order.order').findMany({
+                where,
+                orderBy: { createdAt: 'desc' },
+                limit: pageSize,
+                offset: (page - 1) * pageSize,
+                populate: ['items', 'client'],
+            }),
+            strapi.db.query('api::order.order').count({ where }),
+        ])
+        ctx.body = { data: rows, meta: { pagination: { page, pageSize, total } } }
+    },
+
+    async courierAccept(ctx: any) {
+        const employee = ctx.state.employee
+        if (!employee) return ctx.unauthorized()
+        const { documentId } = ctx.params
+        const order = await strapi.documents('api::order.order').findOne({
+            documentId, populate: ['employee'],
+        })
+        if (!order) return ctx.notFound()
+        if ((order as any).employee?.id !== employee.id) return ctx.forbidden('NOT_YOURS')
+        if (!['new', 'accepted'].includes((order as any).status)) return ctx.conflict('WRONG_STATUS')
+        const updated = await strapi.documents('api::order.order').update({
+            documentId,
+            data: { status: 'in_progress' },
+            populate: ['client', 'items'],
+        })
+        try {
+            await strapi.service('api::order.order').logEvent(
+                (updated as any).id, 'status_changed', { to: 'in_progress' }, employee.id,
+            )
+        } catch { /* noop */ }
+        ctx.body = { data: updated }
+    },
+
+    async courierConfirm(ctx: any) {
+        const employee = ctx.state.employee
+        if (!employee) return ctx.unauthorized()
+        const { documentId } = ctx.params
+        const order = await strapi.documents('api::order.order').findOne({
+            documentId, populate: ['employee'],
+        })
+        if (!order) return ctx.notFound()
+        if ((order as any).employee?.id !== employee.id) return ctx.forbidden('NOT_YOURS')
+        if ((order as any).status !== 'in_progress') return ctx.conflict('WRONG_STATUS')
+        const updated = await strapi.documents('api::order.order').update({
+            documentId,
+            data: { status: 'done' },
+            populate: ['client', 'items'],
+        })
+        try {
+            await strapi.service('api::order.order').logEvent(
+                (updated as any).id, 'status_changed', { to: 'done' }, employee.id,
+            )
+        } catch { /* noop */ }
+        ctx.body = { data: updated }
+    },
 }))

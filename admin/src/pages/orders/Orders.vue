@@ -17,6 +17,7 @@ import AcceptPaymentDialog from './components/AcceptPaymentDialog.vue'
 import RefundDialog from './components/RefundDialog.vue'
 import OrderPanel from './components/OrderPanel.vue'
 import CancelOrderDialog from './components/CancelOrderDialog.vue'
+import DispatchDialog from './components/DispatchDialog.vue'
 import { Transactions as TransactionsAPI } from '@/services/transactions'
 import { api, qs } from '@/services/api'
 import type { Transaction } from '@/services/resources'
@@ -33,6 +34,7 @@ const paidFilter = ref<'all' | 'unpaid'>('all')
 const open = ref<Order | null>(null)
 const payOpen = ref(false)
 const refundOpen = ref(false)
+const dispatchOpen = ref(false)
 const openTxns = ref<Transaction[]>([])
 const auth = useAuth()
 const feed = useOrdersFeed()
@@ -87,6 +89,8 @@ function buildServerFilters(): Record<string, any> {
     if (k === 'new')   { f.status = 'new'; f.employee = { id: { $null: true } } }
     else if (k === 'taken') { f.status = 'new'; f.employee = { id: { $notNull: true } } }
     else if (k !== ALL) f.status = k
+    const employeeDoc = String(route.query.employee || '')
+    if (employeeDoc) f.employee = { ...(f.employee || {}), documentId: { $eq: employeeDoc } }
     if (paidFilter.value === 'unpaid') {
         f.paymentStatus = { $notIn: ['paid', 'overpaid'] }
         if (!f.status) f.status = { $not: 'canceled' }
@@ -196,6 +200,7 @@ onMounted(async () => {
     await openById(Number(route.query.open))
 })
 
+watch(() => route.query.employee, () => { timelinePage.value = 0; reload() })
 watch(() => route.query.open, (v) => {
     const id = Number(v)
     if (id) openById(id)
@@ -763,7 +768,9 @@ const orderCartDiscount = computed<{ amount: number; percent: number | null; nam
         </div>
     </div>
 
-    <OrderPanel :order="open" :events="((open as any)?.events) ?? []" :transactions="openTxns" :panel-banner="panelBanner" @close="open = null" @take="takeOrder(open!)" @confirm="confirmByCall" @move="(to) => changeStatus(open!, to)" @cancel="open && askCancel(open)" @payOpen="payOpen = true" @refundOpen="refundOpen = true" @cancelTxn="cancelTxn" @bannerClose="panelBanner = null" @edit="open && router.push({ name: 'order-edit', params: { id: open.id } })" />
+    <OrderPanel :order="open" :events="((open as any)?.events) ?? []" :transactions="openTxns" :panel-banner="panelBanner" @close="open = null" @take="takeOrder(open!)" @confirm="confirmByCall" @move="(to) => changeStatus(open!, to)" @cancel="open && askCancel(open)" @payOpen="payOpen = true" @refundOpen="refundOpen = true" @cancelTxn="cancelTxn" @bannerClose="panelBanner = null" @edit="open && router.push({ name: 'order-edit', params: { id: open.id } })" @dispatch="dispatchOpen = true" />
+
+    <DispatchDialog v-model:visible="dispatchOpen" :order="open" @saved="(u) => { open = u as any; reload() }" />
 
     <!-- Отмена: причина обязательна, транзакции заказа сторнируются на сервере -->
     <CancelOrderDialog :visible="!!cancelDialog.order"

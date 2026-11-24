@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import Drawer from 'primevue/drawer'
 import type { Order, OrderStatus, Transaction } from '@/services/resources'
 import OrderDetails from './OrderDetails.vue'
@@ -22,7 +23,16 @@ const emit = defineEmits<{
     (e: 'cancelTxn', t: Transaction): void
     (e: 'bannerClose'): void
     (e: 'edit'): void
+    (e: 'dispatch'): void
 }>()
+
+const dispatchChip = computed(() => {
+    const o = props.order
+    if (!o) return null
+    if (o.deliveryBy === 'yandex') return { label: 'Яндекс', cls: 'bg-ink-100 text-ink-700' }
+    if (o.deliveryBy === 'courier' && o.employee) return { label: `Курьер: ${o.employee.fullName}`, cls: 'bg-ink-900 text-cream-50' }
+    return null
+})
 
 const paymentLabel: Record<string, string> = {
     unpaid: 'Не оплачен', partial: 'Частично', paid: 'Оплачен',
@@ -48,7 +58,7 @@ async function copyCode(code: string) {
             position="right" :block-scroll="true"
             class="order-panel-drawer">
         <template #header>
-            <div v-if="order" class="flex items-center gap-3 min-w-0 flex-1">
+            <div v-if="order" class="flex items-center gap-3 min-w-0 flex-1 flex-wrap">
                 <span class="font-display font-extrabold text-xl">{{ order.code }}</span>
                 <button type="button" class="text-ink-400 hover:text-ink-900 p-1 -ml-2" title="Скопировать номер"
                         @click="copyCode(order.code)">
@@ -59,6 +69,9 @@ async function copyCode(code: string) {
                       :class="paymentPill[order.paymentStatus || 'unpaid']">
                     {{ paymentLabel[order.paymentStatus || 'unpaid'] }}
                 </span>
+                <span v-if="dispatchChip" class="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase" :class="dispatchChip.cls">
+                    {{ dispatchChip.label }}
+                </span>
             </div>
         </template>
 
@@ -68,7 +81,8 @@ async function copyCode(code: string) {
                       @move="(to: OrderStatus) => emit('move', to)" @cancel="emit('cancel')"
                       @pay-open="emit('payOpen')" @refund-open="emit('refundOpen')"
                       @cancel-txn="(t: Transaction) => emit('cancelTxn', t)"
-                      @banner-close="emit('bannerClose')" @edit="emit('edit')" />
+                      @banner-close="emit('bannerClose')" @edit="emit('edit')"
+                      @dispatch="emit('dispatch')" />
     </Drawer>
 </template>
 

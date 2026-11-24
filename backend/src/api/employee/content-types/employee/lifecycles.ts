@@ -1,3 +1,5 @@
+import { hashKey, isHashed } from '../../../../utils/staff-key'
+
 /** `+998XXXXXXXXX` — ровно тот же формат, что в `signIn`. */
 function normalizePhone(input: unknown): string | undefined {
     if (input == null) return undefined
@@ -12,11 +14,9 @@ function apply(data: Record<string, any> | undefined | null) {
         const normalized = normalizePhone(data.phone)
         if (normalized) data.phone = normalized
     }
-    // Dev-сетап: ключ хранится в plain, чтобы manager видел его в карточке сотрудника.
-    // В прод-переходе: раскомментировать hash + staff-sign-in оставит legacy-режим (plain-compare).
-    // if (data.personalKey && !isHashed(data.personalKey)) {
-    //     data.personalKey = hashKey(String(data.personalKey))
-    // }
+    if (data.personalKey && !isHashed(data.personalKey)) {
+        data.personalKey = hashKey(String(data.personalKey))
+    }
 }
 
 export default {

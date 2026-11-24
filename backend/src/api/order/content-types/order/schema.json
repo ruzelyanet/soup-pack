@@ -9,6 +9,7 @@
     "cancelReason":  { "type": "string" },
     "paymentMethod":        { "type": "enumeration", "enum": ["cash", "card", "click", "payme", "transfer"], "default": "card" },
     "deliveryMethod":       { "type": "enumeration", "enum": ["courier_now", "preorder"], "default": "courier_now" },
+    "deliveryBy":           { "type": "enumeration", "enum": ["courier", "yandex"] },
     "deliverySlotAt":       { "type": "datetime" },
     "comment":              { "type": "text" },
     "subtotal":             { "type": "decimal" },

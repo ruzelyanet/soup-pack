@@ -8,6 +8,7 @@ const router = createRouter({
     history: createWebHistory(),
     routes: [
         { path: '/login', name: 'login', component: () => import('@/pages/LoginPage.vue'), meta: { public: true } },
+        { path: '/courier', name: 'courier', component: () => import('@/pages/courier/CourierApp.vue'), meta: { roles: ['courier'] } satisfies Meta },
         {
             path: '/',
             component: AdminLayout,
@@ -30,7 +31,7 @@ const router = createRouter({
                 { path: 'orders/new',         name: 'order-new',     component: () => import('@/pages/orders/OrderCreatePage.vue'), meta: { roles: ['manager', 'duty'] } },
                 { path: 'orders/:id(\\d+)',    name: 'order',         component: () => import('@/pages/orders/OrderPage.vue') },
                 { path: 'orders/:id(\\d+)/edit', name: 'order-edit', component: () => import('@/pages/orders/OrderEditPage.vue'), meta: { roles: ['manager', 'duty'] } satisfies Meta },
-                { path: 'transactions',       name: 'transactions',  component: () => import('@/pages/transactions/Transactions.vue'), meta: { roles: ['manager', 'duty', 'courier'] } satisfies Meta },
+                { path: 'transactions',       name: 'transactions',  component: () => import('@/pages/transactions/Transactions.vue'), meta: { roles: ['manager', 'duty'] } satisfies Meta },
                 { path: 'discounts',          name: 'discounts',       component: () => import('@/pages/discounts/List.vue'),   meta: { roles: ['manager'] } satisfies Meta },
                 { path: 'discounts/new',      name: 'discount-new',    component: () => import('@/pages/discounts/Editor.vue'), meta: { roles: ['manager'] } satisfies Meta },
                 { path: 'discounts/:id',      name: 'discount',        component: () => import('@/pages/discounts/Card.vue'),   meta: { roles: ['manager'] } satisfies Meta },
@@ -41,7 +42,7 @@ const router = createRouter({
                 { path: 'clients',            name: 'clients',       component: () => import('@/pages/clients/Clients.vue'), meta: { roles: ['manager', 'duty'] } satisfies Meta },
 
                 { path: 'employees',          name: 'employees',     component: () => import('@/pages/employees/Employees.vue'), meta: { roles: ['manager'] } satisfies Meta },
-                { path: 'employees/:id',      name: 'employee',      component: () => import('@/pages/employees/EmployeeEditor.vue'), meta: { roles: ['manager'] } satisfies Meta },
+                { path: 'employees/:id',      name: 'employee',      component: () => import('@/pages/employees/EmployeeCard.vue'), meta: { roles: ['manager'] } satisfies Meta },
 
                 { path: 'request-forms',       name: 'request-forms',  component: () => import('@/pages/request-forms/List.vue'),   meta: { roles: ['manager'] } satisfies Meta },
                 { path: 'request-forms/:id',   name: 'request-form',   component: () => import('@/pages/request-forms/Editor.vue'), meta: { roles: ['manager'] } satisfies Meta },
@@ -58,20 +59,29 @@ const router = createRouter({
     },
 })
 
+function homeForRole(role: StaffRole | null | undefined) {
+    if (role === 'courier') return { name: 'courier' }
+    return { name: 'dashboard' }
+}
+
 router.beforeEach((to) => {
     const auth = useAuth()
-    // Залогинен и пытается открыть /login → на главную (или куда просил через ?redirect).
+    // Залогинен и пытается открыть /login → на свою «домашнюю» (или ?redirect).
     if (to.name === 'login' && auth.isAuthed) {
         const r = to.query?.redirect
-        return typeof r === 'string' && r !== '/login' ? r : { name: 'dashboard' }
+        return typeof r === 'string' && r !== '/login' ? r : homeForRole(auth.role)
     }
     if (to.meta?.public) return true
     if (!auth.isAuthed) {
         return { name: 'login', query: { redirect: to.fullPath } }
     }
+    // Курьер пытается в любой admin-раздел → на свою /courier.
+    if (auth.role === 'courier' && to.name !== 'courier') {
+        return { name: 'courier' }
+    }
     const allowed = (to.meta?.roles as StaffRole[] | undefined) ?? null
     if (allowed && auth.role && !allowed.includes(auth.role)) {
-        return { name: 'orders' }
+        return homeForRole(auth.role)
     }
     return true
 })

@@ -1,4 +1,4 @@
-import { resource } from './api'
+import { api, resource } from './api'
 
 interface Base { id: number; documentId: string }
 
@@ -41,6 +41,8 @@ export interface Employee extends Base {
     fullName: string; phone: string
     role: 'manager' | 'duty' | 'courier'
     personalKey: string
+    active: boolean
+    photo?: { id: number; url: string } | null
     dutyFrom?: string | null; dutyTo?: string | null
 }
 export interface Client extends Base {
@@ -86,6 +88,7 @@ export interface Order extends Base {
     code: string; status: OrderStatus; cancelReason?: string
     paymentMethod?: 'cash' | 'card' | 'click' | 'payme' | 'transfer'
     deliveryMethod?: 'courier_now' | 'preorder'
+    deliveryBy?: 'courier' | 'yandex' | null
     deliverySlotAt?: string | null
     comment?: string
     subtotal?: number | null
@@ -201,6 +204,51 @@ export const OrderSets  = resource<OrderSet>('staff/order-sets')
 export const Orders     = resource<Order>('orders')     // уже под is-staff в основном роутере
 export const Clients    = resource<Client>('clients')    // уже под is-staff
 export const Employees  = resource<Employee>('employees')// уже под is-staff manager-only
+
+/** Сгенерировать новый personalKey. Plain в ответе — показать один раз. */
+export async function regenerateEmployeeKey(documentId: string): Promise<string> {
+    const res = await api.post(`/employees/${documentId}/regenerate-key`)
+    return res.data?.data?.personalKey as string
+}
+
+export interface EmployeeStats {
+    totalCount: number
+    doneCount: number
+    revenueAll: number
+    revenue30: number
+    count30: number
+    avgCheck: number
+}
+export async function getEmployeeStats(documentId: string): Promise<EmployeeStats> {
+    const res = await api.get(`/employees/${documentId}/stats`)
+    return res.data?.data as EmployeeStats
+}
+
+// --- Order dispatch (manager/duty) + courier actions ---
+export async function dispatchOrder(documentId: string, deliveryBy: 'courier' | 'yandex', employeeDocId?: string | null) {
+    const res = await api.post(`/staff/orders/${documentId}/dispatch`, {
+        data: { deliveryBy, employeeDocId: employeeDocId ?? null },
+    })
+    return res.data?.data as Order
+}
+
+export async function courierListOrders(status: 'new' | 'accepted' | 'in_progress' | 'done', page = 1, pageSize = 25) {
+    const res = await api.get(`/courier/orders`, { params: { status, page, pageSize } })
+    return {
+        data: (res.data?.data ?? []) as Order[],
+        total: Number(res.data?.meta?.pagination?.total ?? 0),
+    }
+}
+
+export async function courierAcceptOrder(documentId: string): Promise<Order> {
+    const res = await api.post(`/courier/orders/${documentId}/accept`)
+    return res.data?.data as Order
+}
+
+export async function courierConfirmOrder(documentId: string): Promise<Order> {
+    const res = await api.post(`/courier/orders/${documentId}/confirm`)
+    return res.data?.data as Order
+}
 
 export interface ShopContact {
     phone?: string | null

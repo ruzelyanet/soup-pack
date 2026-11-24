@@ -31,7 +31,16 @@ const emit = defineEmits<{
     (e: 'cancelTxn', t: Transaction): void
     (e: 'bannerClose'): void
     (e: 'edit'): void
+    (e: 'dispatch'): void
 }>()
+
+const dispatchChip = computed(() => {
+    const o = props.order
+    if (!o) return null
+    if (o.deliveryBy === 'yandex') return { label: 'Яндекс-доставка', cls: 'bg-ink-100 text-ink-700' }
+    if (o.deliveryBy === 'courier' && o.employee) return { label: `Курьер: ${o.employee.fullName}`, cls: 'bg-ink-900 text-cream-50' }
+    return null
+})
 
 const auth = useAuth()
 
@@ -325,6 +334,18 @@ function markerClass(state: string): string {
                                     Причина: {{ order.cancelReason }}
                                 </p>
 
+                                <div v-if="s.state === 'current' && s.key === 'in_progress'" class="mt-3 space-y-2">
+                                    <div v-if="dispatchChip" class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold" :class="dispatchChip.cls">
+                                        <i class="pi pi-truck text-[10px]"></i>{{ dispatchChip.label }}
+                                    </div>
+                                    <div v-else class="text-xs text-tomato-500 font-semibold">
+                                        <i class="pi pi-exclamation-circle text-[11px]"></i>
+                                        Способ доставки не выбран
+                                    </div>
+                                    <Button :label="dispatchChip ? 'Изменить доставку' : 'Выбрать способ доставки'"
+                                            size="small" severity="secondary" outlined icon="pi pi-truck"
+                                            @click="emit('dispatch')" />
+                                </div>
                                 <div v-if="s.state === 'current' && s.action" class="mt-3 flex gap-2 flex-wrap">
                                     <a v-if="s.action.kind === 'confirm' && order.client?.phone"
                                        :href="`tel:${order.client.phone}`"
@@ -374,6 +395,17 @@ function markerClass(state: string): string {
                                 </template>
                                 <template v-else>{{ s.description }}</template>
                             </span>
+                            <div v-if="s.state === 'current' && s.key === 'in_progress'" class="space-y-1.5">
+                                <div v-if="dispatchChip" class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold" :class="dispatchChip.cls">
+                                    <i class="pi pi-truck text-[10px]"></i>{{ dispatchChip.label }}
+                                </div>
+                                <div v-else class="text-xs text-tomato-500 font-semibold flex items-center gap-1">
+                                    <i class="pi pi-exclamation-circle text-[11px]"></i>Способ доставки не выбран
+                                </div>
+                                <Button :label="dispatchChip ? 'Изменить доставку' : 'Выбрать способ доставки'"
+                                        size="small" severity="secondary" outlined icon="pi pi-truck"
+                                        @click="emit('dispatch')" />
+                            </div>
                             <div v-if="s.state === 'current' && s.action" class="flex gap-1.5 flex-wrap">
                                 <a v-if="s.action.kind === 'confirm' && order.client?.phone"
                                    :href="`tel:${order.client.phone}`"

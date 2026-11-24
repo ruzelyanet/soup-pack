@@ -28,7 +28,8 @@ async function enter() {
         const { token, employee } = res.data?.data || {}
         if (!token || !employee) throw new Error('Пустой ответ сервера')
         auth.setSession(token, employee)
-        const to = (route.query.redirect as string) || '/'
+        const fallback = employee.role === 'courier' ? '/courier' : '/'
+        const to = (route.query.redirect as string) || fallback
         // Hard-nav по той же причине, что и в logout: stale Vite chunk у dynamic import
         // роняет router.push мимо .catch(). Свежий index.html → свежие chunks.
         window.location.href = to
