@@ -24,11 +24,10 @@ export default defineNuxtConfig({
     },
 
     primevue: {
-        importPT: { from: '~/theme/preset.ts', as: 'SoupPuckPreset' },
+        importTheme: { from: '~/theme/preset.ts', name: 'SoupPuckPreset' },
         options: {
             ripple: true,
             theme: {
-                preset: 'SoupPuckPreset',
                 options: {
                     darkModeSelector: '.dark',
                     cssLayer: {

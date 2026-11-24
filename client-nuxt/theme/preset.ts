@@ -1,7 +1,7 @@
 import { definePreset } from '@primevue/themes'
 import Aura from '@primevue/themes/aura'
 
-export const SoupPuckPreset = definePreset(Aura, {
+const SoupPuckPreset = definePreset(Aura, {
     semantic: {
         primary: {
             50:  '#fde9e3',
@@ -21,3 +21,6 @@ export const SoupPuckPreset = definePreset(Aura, {
         button: { root: { borderRadius: '18px' } },
     },
 })
+
+export default SoupPuckPreset
+export { SoupPuckPreset }

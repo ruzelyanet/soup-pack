@@ -62,7 +62,7 @@ function dec() {
 </script>
 
 <template>
-    <NuxtLink :to="`/product/${product.slug}`" @click="onCardClick"
+    <NuxtLink :to="`/product/${product.slug}`"
               class="bg-sf rounded-[24px] overflow-hidden flex flex-col shadow-[0_1px_0_var(--color-ln)] no-underline text-ink">
         <div
             @touchstart.passive="onTouchStart"
