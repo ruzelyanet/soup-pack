@@ -164,10 +164,10 @@ function repeat() {
 <template>
     <section v-if="order" class="flex-1 flex flex-col">
         <header class="px-4 pt-3.5 pb-2 flex items-center gap-3">
-            <button type="button" aria-label="Назад" @click="goBack()"
+            <NuxtLink to="/" aria-label="Назад" type="button"  
                     class="size-11 rounded-full bg-sf flex items-center justify-center">
                 <Icon name="chevron-left" :size="20" :stroke="2.4" />
-            </button>
+            </NuxtLink>
             <h1 class="m-0 font-display font-black text-[24px] flex-1 truncate">
                 Заказ {{ order.code }}
             </h1>
@@ -312,10 +312,10 @@ function repeat() {
                     class="h-[56px] rounded-[18px] bg-acc text-white font-extrabold text-[16px]">
                 Повторить заказ
             </button>
-            <RouterLink to="/account"
+            <NuxtLink to="/account"
                         class="h-[48px] rounded-[16px] bg-sf text-ink font-extrabold text-[15px] flex items-center justify-center">
                 В кабинет
-            </RouterLink>
+            </NuxtLink>
         </div>
     </section>
 

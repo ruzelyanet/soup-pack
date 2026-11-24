@@ -45,10 +45,10 @@ async function enter() {
 
 <template>
     <section class="flex-1 flex flex-col px-4 pt-6 safe-top">
-        <button type="button" @click="goBack()" aria-label="Назад"
+        <NuxtLink to="/" aria-label="Назад" type="button"  
                 class="size-11 rounded-full bg-sf flex items-center justify-center">
             <Icon name="chevron-left" :size="20" :stroke="2.4" />
-        </button>
+        </NuxtLink>
 
         <h1 class="mt-8 m-0 font-display font-black text-[28px] leading-tight">
             Вход по&nbsp;номеру телефона

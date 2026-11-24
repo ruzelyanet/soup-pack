@@ -86,17 +86,17 @@ function fmt(v: number) {
                         class="size-11 rounded-full border border-ln2 bg-sf flex items-center justify-center">
                     <Icon :name="ui.theme === 'light' ? 'moon' : 'sun'" :size="20" />
                 </button>
-                <RouterLink to="/account" aria-label="Личный кабинет"
+                <NuxtLink to="/account" aria-label="Личный кабинет"
                             class="size-11 rounded-full bg-btr text-ink flex items-center justify-center font-display font-black text-[16px]">
                     {{ avatarLetter }}
-                </RouterLink>
+                </NuxtLink>
             </div>
         </div>
-        <RouterLink to="/search"
+        <NuxtLink to="/search"
                     class="mt-3 h-[50px] rounded-2xl bg-sf border border-ln text-fnt flex items-center gap-2.5 px-3.5 font-semibold text-[15px]">
             <Icon name="search" :size="20" />
             Том-ям, крем-суп, набор…
-        </RouterLink>
+        </NuxtLink>
     </header>
 
     <!-- Call-to-order: главный способ сделать заказ по телефону (номер из админки) -->
@@ -150,7 +150,7 @@ function fmt(v: number) {
     <!-- Repeat last order / Login shortcut -->
     <section class="px-4 pt-4">
         <!-- Авторизован + есть прошлый заказ -->
-        <RouterLink v-if="auth.isAuthed && lastOrder" :to="`/order/${lastOrder.code}`"
+        <NuxtLink v-if="auth.isAuthed && lastOrder" :to="`/order/${lastOrder.code}`"
                     class="flex items-center gap-3 bg-sf border border-ln rounded-[20px] px-3.5 py-3 text-ink">
             <span class="flex">
                 <SoupPuck variant="pumpkin-cream" :size="38" :ring="false" :shadow="false" />
@@ -165,10 +165,10 @@ function fmt(v: number) {
                 </span>
             </span>
             <Icon name="chevron-right" :size="20" :stroke="2.4" />
-        </RouterLink>
+        </NuxtLink>
 
         <!-- Не авторизован — предложение войти, чтобы повторить заказ -->
-        <RouterLink v-else-if="!auth.isAuthed" to="/login"
+        <NuxtLink v-else-if="!auth.isAuthed" to="/login"
                     class="flex items-center gap-3 bg-deep text-deepink rounded-[20px] px-3.5 py-3">
             <span class="size-10 rounded-full bg-acc/20 text-acct flex items-center justify-center shrink-0">
                 <Icon name="user" :size="20" />
@@ -180,7 +180,7 @@ function fmt(v: number) {
                 </span>
             </span>
             <Icon name="chevron-right" :size="20" :stroke="2.4" />
-        </RouterLink>
+        </NuxtLink>
     </section>
 
     <!-- Меню секций — горизонтальные пилюли с иконкой, ссылка на /category/:slug или /sets -->
@@ -205,13 +205,13 @@ function fmt(v: number) {
                  :id="`sec-${s.id}`" class="pt-6 flex flex-col gap-3.5">
             <div class="px-4 flex items-baseline justify-between gap-3">
                 <h2 class="m-0 font-display font-black text-[24px]">{{ s.title }}</h2>
-                <RouterLink to="/sets" class="text-[13px] font-extrabold text-acct no-underline shrink-0">
+                <NuxtLink to="/sets" class="text-[13px] font-extrabold text-acct no-underline shrink-0">
                     Все →
-                </RouterLink>
+                </NuxtLink>
             </div>
             <div class="overflow-x-auto no-scrollbar">
                 <div class="flex gap-3 px-4 pb-1.5 w-max">
-                    <RouterLink v-for="os in sets" :key="os.id" :to="`/set/${os.slug}`"
+                    <NuxtLink v-for="os in sets" :key="os.id" :to="`/set/${os.slug}`"
                                 class="w-[286px] rounded-[26px] bg-deep text-deepink p-[18px] flex flex-col gap-3">
                         <div class="flex items-center">
                             <template v-for="(it, idx) in os.items.slice(0, 3)" :key="idx">
@@ -248,7 +248,7 @@ function fmt(v: number) {
                                 <Icon name="plus" :size="20" :stroke="2.8" />
                             </button>
                         </div>
-                    </RouterLink>
+                    </NuxtLink>
                 </div>
             </div>
         </section>
@@ -258,10 +258,10 @@ function fmt(v: number) {
                  :id="`sec-${s.id}`" class="pt-6 flex flex-col gap-3.5">
             <div class="px-4 flex items-baseline justify-between gap-3">
                 <h2 class="m-0 font-display font-black text-[24px]">{{ s.title }}</h2>
-                <RouterLink v-if="s.category?.slug" :to="`/category/${s.category.slug}`"
+                <NuxtLink v-if="s.category?.slug" :to="`/category/${s.category.slug}`"
                             class="text-[13px] font-extrabold text-acct no-underline shrink-0">
                     Все →
-                </RouterLink>
+                </NuxtLink>
             </div>
             <div class="overflow-x-auto no-scrollbar">
                 <div class="flex gap-3 px-4 pb-1 w-max items-stretch">

@@ -867,9 +867,9 @@ async function submit() {
             </button>
             <span class="text-center text-[12px] text-mut">
                 Нажимая кнопку, вы соглашаетесь с
-                <RouterLink to="/delivery" class="text-ink underline underline-offset-2 font-bold">
+                <NuxtLink to="/delivery" class="text-ink underline underline-offset-2 font-bold">
                     условиями доставки и оплаты
-                </RouterLink>
+                </NuxtLink>
             </span>
         </div>
 

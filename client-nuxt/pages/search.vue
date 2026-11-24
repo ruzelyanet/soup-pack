@@ -41,10 +41,10 @@ const SUGGEST = ['Том-ям', 'Крем-суп', 'Куриный', 'Набор
 <template>
     <section class="flex-1 flex flex-col">
         <header class="px-4 pt-3.5 pb-3 flex items-center gap-2">
-            <button type="button" aria-label="Назад" @click="goBack()"
+            <NuxtLink to="/" aria-label="Назад" type="button"  
                     class="size-11 rounded-full bg-sf flex items-center justify-center">
                 <Icon name="chevron-left" :size="20" :stroke="2.4" />
-            </button>
+            </NuxtLink>
             <div class="flex-1 h-11 rounded-2xl bg-sf border border-ln px-3.5 flex items-center gap-2.5">
                 <Icon name="search" :size="18" class="text-fnt" />
                 <input ref="inputRef" v-model="q" placeholder="Том-ям, крем-суп, набор…"
@@ -64,7 +64,7 @@ const SUGGEST = ['Том-ям', 'Крем-суп', 'Куриный', 'Набор
         </section>
 
         <section class="px-4 pt-2 flex flex-col gap-2.5">
-            <RouterLink v-for="p in results" :key="p.id" :to="`/product/${p.slug}`"
+            <NuxtLink v-for="p in results" :key="p.id" :to="`/product/${p.slug}`"
                         class="bg-sf rounded-[22px] p-3 flex gap-3 items-center text-ink">
                 <img v-if="productImg(p)" :src="productImg(p)" :alt="p.name"
                      class="size-[56px] object-cover rounded-full shrink-0" />
@@ -88,7 +88,7 @@ const SUGGEST = ['Том-ям', 'Крем-суп', 'Куриный', 'Набор
                         {{ fmt(finalPrice(p)) }}
                     </span>
                 </div>
-            </RouterLink>
+            </NuxtLink>
             <div v-if="!results.length" class="text-center text-fnt pt-10">
                 Ничего не нашли по «{{ q }}»
             </div>

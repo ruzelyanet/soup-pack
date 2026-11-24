@@ -91,10 +91,10 @@ function fmt(v: number) { return new Intl.NumberFormat('ru-RU').format(v) + ' с
     <!-- Empty state -->
     <section v-if="!cart.items.length" class="flex-1 flex flex-col">
         <header class="px-4 pt-3.5 pb-2 flex items-center gap-3">
-            <button type="button" aria-label="Назад" @click="router.push('/')"
+            <NuxtLink to="/" aria-label="Назад" type="button"  
                     class="size-11 rounded-full bg-sf flex items-center justify-center">
                 <Icon name="chevron-left" :size="20" :stroke="2.4" />
-            </button>
+            </NuxtLink>
             <h1 class="m-0 font-display font-black text-[26px]">Корзина</h1>
         </header>
         <div class="flex-1 flex flex-col items-center justify-center gap-4 px-8 text-center">
@@ -111,20 +111,20 @@ function fmt(v: number) { return new Intl.NumberFormat('ru-RU').format(v) + ' с
             <p class="m-0 text-[16px] leading-snug text-mut">
                 Добавьте пару шайб — горячий обед будет готов за 5 минут.
             </p>
-            <RouterLink to="/"
+            <NuxtLink to="/"
                         class="min-h-14 px-7 rounded-[18px] bg-acc text-white font-extrabold text-[16px] flex items-center">
                 Перейти в меню
-            </RouterLink>
+            </NuxtLink>
         </div>
     </section>
 
     <!-- Full cart -->
     <section v-else class="flex-1 flex flex-col">
         <header class="px-4 pt-3.5 pb-2 flex items-center gap-3">
-            <button type="button" aria-label="Назад" @click="router.push('/')"
+            <NuxtLink to="/" aria-label="Назад" type="button"  
                     class="size-11 rounded-full bg-sf flex items-center justify-center">
                 <Icon name="chevron-left" :size="20" :stroke="2.4" />
-            </button>
+            </NuxtLink>
             <h1 class="m-0 font-display font-black text-[26px] flex-1">Корзина</h1>
             <button type="button" @click="cart.clear()"
                     class="font-bold text-[14px] text-fnt min-h-11 flex items-center">
@@ -299,10 +299,10 @@ function fmt(v: number) { return new Intl.NumberFormat('ru-RU').format(v) + ' с
                     <dt class="text-mut">Доставка</dt>
                     <dd class="m-0 font-bold text-right flex flex-col items-end">
                         <span>Яндекс Такси · клиент оплачивает</span>
-                        <RouterLink to="/delivery"
+                        <NuxtLink to="/delivery"
                                     class="text-[12px] font-semibold text-acct underline underline-offset-2">
                             условия и оплата
-                        </RouterLink>
+                        </NuxtLink>
                     </dd>
                 </div>
                 <div class="h-px bg-ln"></div>
@@ -316,10 +316,10 @@ function fmt(v: number) { return new Intl.NumberFormat('ru-RU').format(v) + ' с
         <div class="flex-1 min-h-6"></div>
 
         <div class="sticky bottom-0 px-4 pt-3 pb-5 bg-bg border-t border-ln">
-            <button type="button" @click="router.push('/checkout')"
-                    class="w-full h-[60px] rounded-[20px] bg-acc text-white font-extrabold text-[17px] shadow-[0_14px_30px_-12px_rgba(150,40,10,0.7)]">
+            <NuxtLink to="/checkout"
+                      class="w-full h-[60px] rounded-[20px] bg-acc text-white font-extrabold text-[17px] shadow-[0_14px_30px_-12px_rgba(150,40,10,0.7)] flex items-center justify-center no-underline">
                 Оформить · {{ fmt(cart.total) }}
-            </button>
+            </NuxtLink>
         </div>
     </section>
 </template>

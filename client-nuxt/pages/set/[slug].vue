@@ -40,10 +40,10 @@ function addSet() {
     <section v-if="set" class="flex-1 flex flex-col">
         <div class="relative bg-deep text-deepink rounded-b-[36px] pb-8">
             <div class="absolute top-3.5 left-4 right-4 flex justify-between z-10">
-                <button type="button" aria-label="Назад" @click="goBack()"
+                <NuxtLink to="/" aria-label="Назад" type="button"  
                         class="size-11 rounded-full bg-sf flex items-center justify-center text-ink">
                     <Icon name="chevron-left" :size="20" :stroke="2.4" />
-                </button>
+                </NuxtLink>
                 <button type="button" aria-label="Поделиться"
                         class="size-11 rounded-full bg-sf flex items-center justify-center text-ink">
                     <Icon name="share" :size="20" />

@@ -36,10 +36,10 @@ const lightbox = ref<string | null>(null)
     <section class="flex-1 flex flex-col pb-6">
         <!-- Header -->
         <header class="px-4 pt-3.5 pb-2 flex items-center gap-3">
-            <button type="button" aria-label="Назад" @click="goBack()"
+            <NuxtLink to="/" aria-label="Назад" type="button"  
                     class="size-11 rounded-full bg-sf flex items-center justify-center">
                 <Icon name="chevron-left" :size="20" :stroke="2.4" />
-            </button>
+            </NuxtLink>
             <h1 class="m-0 font-display font-black text-[22px] flex-1">Шеф-повар</h1>
         </header>
 

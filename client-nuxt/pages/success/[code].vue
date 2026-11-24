@@ -50,10 +50,10 @@ const order = computed(() =>
         </div>
 
         <div class="pt-5 pb-6 flex flex-col gap-2.5">
-            <RouterLink v-if="order" :to="`/order/${order.code}`"
+            <NuxtLink v-if="order" :to="`/order/${order.code}`"
                         class="h-[60px] rounded-[20px] bg-acc text-white font-extrabold text-[17px] flex items-center justify-center">
                 Открыть заказ
-            </RouterLink>
+            </NuxtLink>
             <button type="button" @click="router.replace('/')"
                     class="h-[52px] rounded-[18px] bg-sf text-ink font-extrabold text-[15px]">
                 На главную

@@ -82,14 +82,14 @@ onBeforeUnmount(() => window.removeEventListener('scroll', onScroll))
             class="grid grid-cols-5 bg-sf rounded-t-[22px] px-1 pt-1.5 safe-bottom shadow-[0_-1px_0_var(--color-ln)]"
             style="padding-bottom: calc(env(safe-area-inset-bottom) + 16px);"
         >
-            <RouterLink
+            <NuxtLink
                 v-for="t in tabs" :key="t.to" :to="t.to"
                 class="min-h-[52px] flex flex-col items-center justify-center gap-1 font-bold text-[10px] transition px-0.5"
                 :class="isActive(t.to) ? 'text-acct' : 'text-mut'"
             >
                 <Icon :name="t.icon" :size="20" />
                 {{ t.name }}
-            </RouterLink>
+            </NuxtLink>
         </nav>
         </div>
     </div>

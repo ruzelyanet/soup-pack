@@ -194,31 +194,31 @@ function askDelete() {
                 <p class="m-0 text-mut leading-snug">
                     По номеру телефона мы соберём историю, адреса и быстрые повторы.
                 </p>
-                <RouterLink to="/login"
+                <NuxtLink to="/login"
                             class="h-[56px] px-7 rounded-[18px] bg-acc text-white font-extrabold text-[16px] flex items-center">
                     Войти по номеру
-                </RouterLink>
+                </NuxtLink>
 
                 <!-- Информационные разделы и без логина -->
                 <div class="w-full flex flex-col gap-2 pt-6">
-                    <RouterLink to="/discounts"
+                    <NuxtLink to="/discounts"
                                 class="h-[52px] rounded-[16px] bg-sf px-4 flex items-center gap-3 font-bold text-ink">
                         <Icon name="sparkles" :size="20" class="text-acct" />
                         <span class="flex-1 text-left">Скидки</span>
                         <Icon name="chevron-right" :size="18" :stroke="2.4" class="text-fnt" />
-                    </RouterLink>
-                    <RouterLink to="/delivery"
+                    </NuxtLink>
+                    <NuxtLink to="/delivery"
                                 class="h-[52px] rounded-[16px] bg-sf px-4 flex items-center gap-3 font-bold text-ink">
                         <Icon name="map-pin" :size="20" class="text-acct" />
                         <span class="flex-1 text-left">Доставка и оплата</span>
                         <Icon name="chevron-right" :size="18" :stroke="2.4" class="text-fnt" />
-                    </RouterLink>
-                    <RouterLink to="/about"
+                    </NuxtLink>
+                    <NuxtLink to="/about"
                                 class="h-[52px] rounded-[16px] bg-sf px-4 flex items-center gap-3 font-bold text-ink">
                         <Icon name="heart" :size="20" class="text-acct" />
                         <span class="flex-1 text-left">О нас</span>
                         <Icon name="chevron-right" :size="18" :stroke="2.4" class="text-fnt" />
-                    </RouterLink>
+                    </NuxtLink>
                 </div>
             </div>
         </template>
@@ -227,10 +227,10 @@ function askDelete() {
         <template v-else>
             <!-- Простая шапка -->
             <header class="px-4 pt-4 pb-2 flex items-center gap-3">
-                <RouterLink to="/" aria-label="В каталог"
+                <NuxtLink to="/" aria-label="В каталог"
                             class="size-11 rounded-full bg-sf flex items-center justify-center text-ink">
                     <Icon name="chevron-left" :size="20" :stroke="2.4" />
-                </RouterLink>
+                </NuxtLink>
                 <h1 class="m-0 font-display font-black text-[24px] flex-1">Профиль</h1>
                 <button type="button" aria-label="Сменить тему" @click="ui.toggleTheme()"
                         class="size-11 rounded-full bg-sf flex items-center justify-center text-ink">
@@ -301,7 +301,7 @@ function askDelete() {
                 <h2 class="m-0 font-display font-extrabold text-[20px] -tracking-[.02em]">
                     {{ activeOrders.length > 1 ? 'Текущие заказы' : 'Текущий заказ' }}
                 </h2>
-                <RouterLink v-for="co in activeOrders" :key="co.code" :to="`/order/${co.code}`"
+                <NuxtLink v-for="co in activeOrders" :key="co.code" :to="`/order/${co.code}`"
                             class="bg-deep text-deepink rounded-[26px] p-[18px] flex flex-col gap-4 no-underline">
                     <div class="flex justify-between items-baseline gap-2">
                         <span class="font-extrabold text-[16px]">№ {{ co.code }}</span>
@@ -334,7 +334,7 @@ function askDelete() {
                             {{ fmt(co.total) }}
                         </span>
                     </div>
-                </RouterLink>
+                </NuxtLink>
             </section>
 
             <!-- История заказов -->
@@ -349,10 +349,10 @@ function askDelete() {
                 <article v-for="o in historyOrders" :key="o.code"
                          class="bg-sf rounded-[24px] p-4 flex flex-col gap-3">
                     <div class="flex justify-between items-center">
-                        <RouterLink :to="`/order/${o.code}`" class="flex flex-col gap-0.5 text-ink no-underline">
+                        <NuxtLink :to="`/order/${o.code}`" class="flex flex-col gap-0.5 text-ink no-underline">
                             <span class="font-extrabold text-[15px]">№ {{ o.code }}</span>
                             <span class="text-[12px] text-fnt">{{ shortDate(o.createdAt) }}</span>
-                        </RouterLink>
+                        </NuxtLink>
                         <div class="flex items-center gap-1.5">
                             <span v-if="o.paymentStatus === 'paid' || o.paymentStatus === 'overpaid'"
                                   class="font-extrabold text-[11px] px-2 py-1 rounded-full bg-ok-bg text-oks uppercase tracking-wider">
@@ -384,10 +384,10 @@ function askDelete() {
                         <span v-else class="flex-1 font-extrabold text-[16px]">
                             {{ fmt(o.total) }}
                         </span>
-                        <RouterLink v-if="o.status !== 'canceled'" :to="`/order/${o.code}`"
+                        <NuxtLink v-if="o.status !== 'canceled'" :to="`/order/${o.code}`"
                                     class="min-h-11 px-3.5 rounded-[14px] border-[1.5px] border-ln2 text-ink font-bold text-[14px] flex items-center no-underline">
                             Чек
-                        </RouterLink>
+                        </NuxtLink>
                         <button type="button" @click="repeat(o)"
                                 class="min-h-11 px-3.5 rounded-[14px] font-extrabold text-[14px] flex items-center"
                                 :class="o.status === 'canceled'
@@ -449,24 +449,24 @@ function askDelete() {
                 <div class="text-[11px] font-extrabold uppercase tracking-wider text-fnt px-1 mb-1">
                     Информация
                 </div>
-                <RouterLink to="/discounts"
+                <NuxtLink to="/discounts"
                             class="h-[52px] rounded-[16px] bg-sf px-4 flex items-center gap-3 font-bold text-ink">
                     <Icon name="sparkles" :size="20" class="text-acct" />
                     <span class="flex-1">Скидки</span>
                     <Icon name="chevron-right" :size="18" :stroke="2.4" class="text-fnt" />
-                </RouterLink>
-                <RouterLink to="/delivery"
+                </NuxtLink>
+                <NuxtLink to="/delivery"
                             class="h-[52px] rounded-[16px] bg-sf px-4 flex items-center gap-3 font-bold text-ink">
                     <Icon name="map-pin" :size="20" class="text-acct" />
                     <span class="flex-1">Доставка и оплата</span>
                     <Icon name="chevron-right" :size="18" :stroke="2.4" class="text-fnt" />
-                </RouterLink>
-                <RouterLink to="/about"
+                </NuxtLink>
+                <NuxtLink to="/about"
                             class="h-[52px] rounded-[16px] bg-sf px-4 flex items-center gap-3 font-bold text-ink">
                     <Icon name="heart" :size="20" class="text-acct" />
                     <span class="flex-1">О нас</span>
                     <Icon name="chevron-right" :size="18" :stroke="2.4" class="text-fnt" />
-                </RouterLink>
+                </NuxtLink>
             </section>
 
             <!-- Выйти + Удалить профиль -->

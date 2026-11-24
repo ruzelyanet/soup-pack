@@ -89,10 +89,10 @@ const discountCards = computed(() => {
     <section class="flex-1 flex flex-col pb-2">
         <!-- Header -->
         <header class="px-4 pt-3.5 pb-2 flex items-center gap-3">
-            <button type="button" aria-label="Назад" @click="goBack()"
+            <NuxtLink to="/" aria-label="Назад" type="button"  
                     class="size-11 rounded-full bg-sf flex items-center justify-center">
                 <Icon name="chevron-left" :size="20" :stroke="2.4" />
-            </button>
+            </NuxtLink>
             <h1 class="m-0 font-display font-black text-[26px] flex-1">Скидки</h1>
         </header>
 
@@ -119,7 +119,7 @@ const discountCards = computed(() => {
                 Сейчас активных скидок нет. Загляните позже.
             </div>
 
-            <RouterLink v-for="card in discountCards" :key="card.key" :to="card.link"
+            <NuxtLink v-for="card in discountCards" :key="card.key" :to="card.link"
                         class="group relative bg-sf rounded-[24px] overflow-hidden shadow-[0_1px_0_var(--color-ln)] flex gap-3 text-ink">
                 <!-- Image side -->
                 <div class="shrink-0 w-[128px] h-[128px] bg-tint-tom flex items-center justify-center relative overflow-hidden">
@@ -190,7 +190,7 @@ const discountCards = computed(() => {
                         </div>
                     </div>
                 </div>
-            </RouterLink>
+            </NuxtLink>
         </section>
 
         <div class="flex-1 min-h-4"></div>

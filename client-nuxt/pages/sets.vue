@@ -27,15 +27,15 @@ function fmt(v: number) {
 <template>
     <section class="flex-1 flex flex-col">
         <header class="sticky top-0 z-20 bg-bg px-4 pt-3 pb-3 flex items-center gap-3">
-            <button type="button" aria-label="Назад" @click="goBack()"
+            <NuxtLink to="/" aria-label="Назад" type="button"  
                     class="size-11 rounded-full bg-sf border border-ln2 flex items-center justify-center text-ink">
                 <Icon name="chevron-left" :size="20" :stroke="2.4" />
-            </button>
+            </NuxtLink>
             <h1 class="m-0 font-display font-black text-[22px] leading-none">Наборы</h1>
         </header>
 
         <div v-if="sets.length" class="px-4 pt-2 pb-6 flex flex-col gap-3">
-            <RouterLink v-for="s in sets" :key="s.id" :to="`/set/${s.slug}`"
+            <NuxtLink v-for="s in sets" :key="s.id" :to="`/set/${s.slug}`"
                         class="rounded-[26px] bg-deep text-deepink p-[18px] flex flex-col gap-3 no-underline shadow-sm active:scale-[0.99] transition">
                 <div class="flex items-center">
                     <template v-for="(it, idx) in s.items.slice(0, 3)" :key="idx">
@@ -71,7 +71,7 @@ function fmt(v: number) {
                         <Icon name="chevron-right" :size="20" :stroke="2.6" />
                     </span>
                 </div>
-            </RouterLink>
+            </NuxtLink>
         </div>
         <div v-else class="flex-1 flex items-center justify-center text-fnt text-sm px-6 text-center">
             Наборов пока нет — загляните позже.
