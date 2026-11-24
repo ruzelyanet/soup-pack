@@ -77,6 +77,8 @@ body {
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
     overscroll-behavior-y: none;
+    /* отключаем double-tap zoom на мобилках (pinch-zoom остаётся возможным через meta) */
+    touch-action: manipulation;
 }
 
 /* Каркас mobile-first: ширина = min(100%, 500px). Через утилиту, не inline. */
