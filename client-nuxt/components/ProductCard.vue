@@ -123,13 +123,13 @@ function dec() {
                     aria-label="Количество"
                     class="flex items-center bg-acc text-white rounded-[14px] h-11"
                 >
-                    <button type="button" aria-label="Меньше" @click.stop="dec"
+                    <button type="button" aria-label="Меньше" @click.stop.prevent="dec"
                             class="w-[30px] h-11 text-white font-extrabold text-[18px]">−</button>
                     <span class="min-w-[14px] text-center font-extrabold">{{ qty }}</span>
-                    <button type="button" aria-label="Больше" @click.stop="add"
+                    <button type="button" aria-label="Больше" @click.stop.prevent="add"
                             class="w-[30px] h-11 text-white font-extrabold text-[18px]">+</button>
                 </div>
-                <button v-else type="button" aria-label="Добавить в корзину" @click.stop="add"
+                <button v-else type="button" aria-label="Добавить в корзину" @click.stop.prevent="add"
                         class="size-11 rounded-full bg-acc text-white flex items-center justify-center active:scale-95 transition">
                     <Icon name="plus" :size="20" :stroke="2.6" />
                 </button>
