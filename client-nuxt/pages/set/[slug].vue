@@ -13,7 +13,7 @@ const goBack = useGoBack()
 const catalog = useCatalog()
 const cart = useCart()
 
-await useAsyncData('catalog', () => catalog.fetchAll())
+await useAsyncData('catalog', async () => { await catalog.fetchAll(); return true })
 
 const set = computed(() =>
     catalog.sets.find((s) => s.slug === route.params.slug) || catalog.sets[0],

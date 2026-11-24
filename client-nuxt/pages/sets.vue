@@ -10,7 +10,7 @@ const router = useRouter()
 const goBack = useGoBack()
 const catalog = useCatalog()
 
-await useAsyncData('catalog', () => catalog.fetchAll())
+await useAsyncData('catalog', async () => { await catalog.fetchAll(); return true })
 
 useSeoMeta({
     title: 'Наборы SOUP PACK — готовые супы и пасты с доставкой в Ташкенте',
