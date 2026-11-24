@@ -170,8 +170,8 @@ const minDate = new Date()
  */
 const paymentMethods = computed(() => {
     const list: Array<{ k: PayMethod; label: string; subtitle?: string; icon: string; soon?: boolean }> = []
+    list.push({ k: 'cash', label: 'Наличными', subtitle: 'оплата при получении', icon: 'pi-wallet' })
     if (form.delivery === 'preorder') {
-        list.push({ k: 'cash', label: 'Наличными',       subtitle: 'оплата при получении', icon: 'pi-wallet' })
         list.push({ k: 'card', label: 'Картой курьеру',  subtitle: 'soliq qrcode',         icon: 'pi-credit-card' })
     }
     list.push({ k: 'transfer', label: 'Переводом',       subtitle: 'на карту менеджера',   icon: 'pi-send' })

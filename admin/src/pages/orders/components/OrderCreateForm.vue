@@ -526,7 +526,7 @@ function plural(n: number, one: string, few: string, many: string) {
 
 const PAYMENTS: Array<{ id: PaymentMethod; label: string; disabled?: boolean }> = [
     { id: 'transfer', label: 'Перевод' },
-    { id: 'cash',     label: 'Наличные', disabled: true },
+    { id: 'cash',     label: 'Наличные' },
     { id: 'card',     label: 'Карта',    disabled: true },
     { id: 'click',    label: 'Click',    disabled: true },
     { id: 'payme',    label: 'Payme',    disabled: true },
