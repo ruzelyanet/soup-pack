@@ -240,7 +240,7 @@ export default factories.createCoreController(DISCOUNT_UID, ({ strapi }) => ({
             strapi.db.query(DISCOUNT_UID).findMany({
                 where,
                 populate: { targets: { populate: ['product', 'category', 'orderSet'] } },
-                orderBy: { priority: 'asc' },
+                orderBy: [{ createdAt: 'desc' }],
                 limit: pageSize,
                 offset: (page - 1) * pageSize,
             }),
@@ -724,7 +724,7 @@ export default factories.createCoreController(DISCOUNT_UID, ({ strapi }) => ({
                 const s = await strapi.db.query('api::order-set.order-set').findOne({
                     where: { id: sid },
                     select: ['id', 'name', 'slug'],
-                    populate: ['banner'],
+                    populate: { items: { populate: { product: { populate: ['image'] } } } },
                 })
                 if (!s) continue
                 const q = await pricing.quote({
@@ -738,8 +738,13 @@ export default factories.createCoreController(DISCOUNT_UID, ({ strapi }) => ({
                 const base = q.lines.reduce((acc: number, l: any) => acc + l.basePrice * l.qty, 0)
                 const fin = q.total
                 const pct = base > 0 ? Math.round(((base - fin) / base) * 100) : 0
+                const items = (s.items || []).map((it: any) => ({
+                    productName: it.product?.name || '',
+                    image: it.product?.image?.url || null,
+                    qty: it.qty,
+                }))
                 sets.push({
-                    id: s.id, name: s.name, slug: s.slug, banner: s.banner?.url || null,
+                    id: s.id, name: s.name, slug: s.slug, items,
                     basePrice: base, finalPrice: fin, discountPercent: pct,
                     label: snapshot.publicLabel || snapshot.name, endsAt: d.endsAt || null,
                 })

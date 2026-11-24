@@ -23,7 +23,6 @@ function publicForm(f: any) {
     if (!f) return null
     return {
         slug: f.slug,
-        type: f.type,
         title: f.title || '',
         description: f.description || '',
         fields: Array.isArray(f.fields) ? f.fields : [],
@@ -125,8 +124,6 @@ export default factories.createCoreController('api::request-form.request-form' a
         try {
             const created = await strapi.service('api::request.request').createRequest(
                 {
-                    // Тип ВСЕГДА из формы, body.type игнорируется.
-                    type: form.type,
                     name: body.name,
                     phone: body.phone,
                     values,
@@ -171,7 +168,6 @@ export default factories.createCoreController('api::request-form.request-form' a
         const name = String(body?.name || '').trim()
         const slug = String(body?.slug || '').trim()
         if (!name || !slug) return ctx.badRequest('name and slug are required')
-        if (!['individual', 'shop'].includes(body?.type)) return ctx.badRequest('invalid type')
 
         const existing = await strapi.db.query('api::request-form.request-form').findOne({ where: { slug } })
         if (existing) return ctx.badRequest('SLUG_TAKEN')
@@ -180,7 +176,6 @@ export default factories.createCoreController('api::request-form.request-form' a
             data: {
                 name,
                 slug,
-                type: body.type,
                 isActive: body.isActive !== false,
                 title: body.title || null,
                 description: body.description || null,
@@ -203,10 +198,6 @@ export default factories.createCoreController('api::request-form.request-form' a
 
         const patch: Record<string, any> = {}
         if ('name' in body) patch.name = String(body.name).trim()
-        if ('type' in body) {
-            if (!['individual', 'shop'].includes(body.type)) return ctx.badRequest('invalid type')
-            patch.type = body.type
-        }
         if ('isActive' in body) patch.isActive = Boolean(body.isActive)
         if ('title' in body) patch.title = body.title || null
         if ('description' in body) patch.description = body.description || null

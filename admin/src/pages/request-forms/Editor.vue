@@ -21,7 +21,6 @@ const form = reactive<RequestForm>({
     documentId: '',
     name: '',
     slug: '',
-    type: 'individual',
     isActive: true,
     title: '',
     description: '',
@@ -88,7 +87,6 @@ async function save() {
         const next = await RequestForms.update(id, {
             name: form.name,
             slug: form.slug,
-            type: form.type,
             isActive: form.isActive,
             title: form.title || null,
             description: form.description || null,
@@ -186,19 +184,6 @@ onMounted(load)
                     <div>
                         <label class="text-xs font-bold uppercase tracking-wider text-ink-400">Slug</label>
                         <input v-model="form.slug" class="mt-1 w-full rounded-xl border border-ink-200 px-4 py-2.5 font-mono focus:outline-none focus:border-ink-900" />
-                    </div>
-                </div>
-                <div>
-                    <label class="text-xs font-bold uppercase tracking-wider text-ink-400">Тип создаваемых заявок</label>
-                    <div class="mt-1 grid grid-cols-2 gap-2">
-                        <button type="button"
-                                class="rounded-xl py-2.5 text-sm font-semibold border transition"
-                                :class="form.type === 'individual' ? 'bg-ink-900 text-cream-50 border-ink-900' : 'border-ink-200 hover:border-ink-400'"
-                                @click="form.type = 'individual'">Физлицо</button>
-                        <button type="button"
-                                class="rounded-xl py-2.5 text-sm font-semibold border transition"
-                                :class="form.type === 'shop' ? 'bg-ink-900 text-cream-50 border-ink-900' : 'border-ink-200 hover:border-ink-400'"
-                                @click="form.type = 'shop'">Магазин</button>
                     </div>
                 </div>
                 <label class="flex items-center gap-2 text-sm">

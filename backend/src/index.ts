@@ -34,7 +34,7 @@ async function scanOverdueRequests(strapi: Core.Strapi) {
                 outcome: 'open',
                 createdAt: { $lt: threshold },
             } as any,
-            select: ['id', 'code', 'type', 'name', 'phone', 'source', 'sourceDetail', 'createdAt', 'extra'],
+            select: ['id', 'code', 'name', 'phone', 'source', 'sourceDetail', 'createdAt', 'extra'],
             limit: 100,
         })
 
@@ -44,10 +44,9 @@ async function scanOverdueRequests(strapi: Core.Strapi) {
 
             if (tgReady) {
                 const waitMin = Math.round((Date.now() - new Date(r.createdAt).getTime()) / 60_000)
-                const typeLabel = r.type === 'shop' ? 'Магазин' : 'Физлицо'
                 const text =
                     `⚠ <b>Просрочена ${escapeHtml(r.code)}</b>\n` +
-                    `${escapeHtml(typeLabel)} · ждёт ${waitMin} мин\n` +
+                    `Ждёт ${waitMin} мин\n` +
                     `${escapeHtml(r.name)} · ${escapeHtml(r.phone)}`
                 await sendTelegram(settings.telegramBotToken, settings.telegramChatIds, text, strapi.log)
             }
@@ -59,7 +58,7 @@ async function scanOverdueRequests(strapi: Core.Strapi) {
 
             try {
                 const summary: RequestSummary = {
-                    id: r.id, code: r.code, type: r.type, name: r.name,
+                    id: r.id, code: r.code, name: r.name,
                     source: r.source, sourceDetail: (r as any).sourceDetail ?? null,
                     createdAt: new Date(r.createdAt).toISOString(),
                 }
@@ -262,7 +261,6 @@ async function seedCatalog(strapi: Core.Strapi) {
                 name: 'Неделька · 3 человека',
                 slug: 'weekly-3',
                 description: '3 том-яма, 2 пасты и кола — выгодно и удобно на несколько дней.',
-                showInCatalog: true,
                 items: [
                     { product: productDocIdBySlug['tom-yam'],   qty: 3 },
                     { product: productDocIdBySlug['spaghetti'], qty: 2 },

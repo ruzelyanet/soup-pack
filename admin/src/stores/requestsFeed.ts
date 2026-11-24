@@ -78,7 +78,7 @@ export const useRequestsFeed = defineStore('requestsFeed', () => {
         offs.push(hubOnUnauthorized(() => {
             stopFeed()
             auth.logout()
-            if (!location.pathname.endsWith('/login')) location.href = '/admin/login'
+            if (!location.pathname.endsWith('/login')) location.href = '/login'
         }))
     }
 

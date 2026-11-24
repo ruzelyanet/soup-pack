@@ -16,7 +16,6 @@ interface FormFieldSchema {
 }
 interface PublicForm {
     slug: string
-    type: 'individual' | 'shop'
     title: string
     description: string
     fields: FormFieldSchema[]

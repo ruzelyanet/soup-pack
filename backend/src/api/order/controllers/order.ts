@@ -160,21 +160,12 @@ export default factories.createCoreController('api::order.order', ({ strapi }) =
         const periodRequests = await strapi.db.query('api::request.request').findMany({
             where: { createdAt: { $gte: from, $lte: to } } as any,
             populate: ['assignee'],
-            select: ['id', 'type', 'outcome', 'createdAt'],
+            select: ['id', 'outcome', 'createdAt'],
             limit: 10000,
         })
-        const byType: Record<string, { requests: number; converted: number; rate: number }> = {
-            individual: { requests: 0, converted: 0, rate: 0 },
-            shop:       { requests: 0, converted: 0, rate: 0 },
-        }
         const byEmployeeAcc: Record<string, { id: number; name: string; requests: number; converted: number; rate: number }> = {}
 
         for (const r of periodRequests) {
-            const t = r.type || 'individual'
-            byType[t] = byType[t] || { requests: 0, converted: 0, rate: 0 }
-            byType[t].requests += 1
-            if (r.outcome === 'converted') byType[t].converted += 1
-
             const emp = (r as any).assignee
             if (emp?.id) {
                 const key = String(emp.id)
@@ -182,10 +173,6 @@ export default factories.createCoreController('api::order.order', ({ strapi }) =
                 byEmployeeAcc[key].requests += 1
                 if (r.outcome === 'converted') byEmployeeAcc[key].converted += 1
             }
-        }
-        for (const k of Object.keys(byType)) {
-            const b = byType[k]
-            b.rate = b.requests ? Math.round((b.converted / b.requests) * 100) : 0
         }
         const conversionByEmployee = Object.values(byEmployeeAcc).map((b) => ({
             ...b,
@@ -226,7 +213,6 @@ export default factories.createCoreController('api::order.order', ({ strapi }) =
                 to: to.toISOString(),
                 unassignedRequestsCount,
                 avgTimeToAcceptMinutes,
-                conversionByType: byType,
                 conversionByEmployee,
                 salesTotal,
                 receiptsTotal,

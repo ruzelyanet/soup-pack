@@ -8,7 +8,6 @@ const { ApplicationError } = errors
 type Role = 'manager' | 'duty' | 'courier'
 
 type CreateInput = {
-    type: 'individual' | 'shop'
     name: string
     phone: string
     values?: Array<{ key: string; label: string; value: unknown }>
@@ -57,11 +56,11 @@ export default factories.createCoreService('api::request.request' as any, ({ str
             if (kind === 'created') {
                 const row = await strapi.db.query('api::request.request').findOne({
                     where: { id: requestId },
-                    select: ['id', 'code', 'type', 'name', 'source', 'sourceDetail', 'createdAt'],
+                    select: ['id', 'code', 'name', 'source', 'sourceDetail', 'createdAt'],
                 })
                 if (row) {
                     const summary: RequestSummary = {
-                        id: row.id, code: row.code, type: row.type, name: row.name,
+                        id: row.id, code: row.code, name: row.name,
                         source: row.source, sourceDetail: row.sourceDetail ?? null,
                         createdAt: new Date(row.createdAt).toISOString(),
                     }
@@ -161,7 +160,6 @@ export default factories.createCoreService('api::request.request' as any, ({ str
         const created = await strapi.db.query('api::request.request').create({
             data: {
                 code,
-                type: input.type,
                 name: input.name.trim(),
                 phone,
                 values: input.values ?? [],
@@ -181,7 +179,7 @@ export default factories.createCoreService('api::request.request' as any, ({ str
         })
 
         await this.ensureGoalStates(created.id, columnId)
-        await this.logEvent(created.id, 'created', { source: input.source, type: input.type }, options.actorId ?? input.createdById ?? null)
+        await this.logEvent(created.id, 'created', { source: input.source }, options.actorId ?? input.createdById ?? null)
 
         return created
     },

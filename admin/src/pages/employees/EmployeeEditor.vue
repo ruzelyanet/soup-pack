@@ -153,7 +153,7 @@ function fmt(v: number) {
                     </div>
                     <div class="text-xs text-ink-400 mt-2">
                         Сообщите этот ключ сотруднику — он понадобится при логине в админку
-                        (телефон + ключ на <code>/admin/login</code>).
+                        (телефон + ключ на <code>/login</code>).
                     </div>
                 </template>
                 <template v-else>

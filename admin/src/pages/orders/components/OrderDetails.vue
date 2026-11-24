@@ -422,7 +422,7 @@ function markerClass(state: string): string {
                     </div>
                     <div class="text-sm text-ink-700 mt-2">{{ order.address || '—' }}</div>
                     <div v-if="order.lat != null && order.lng != null" class="mt-1">
-                        <a :href="`https://www.openstreetmap.org/?mlat=${order.lat}&mlon=${order.lng}#map=18/${order.lat}/${order.lng}`"
+                        <a :href="`https://yandex.ru/maps/?pt=${order.lng},${order.lat}&z=18&l=map`"
                            target="_blank" rel="noopener"
                            class="inline-flex items-center gap-1 text-xs font-semibold text-primary-600 hover:underline">
                             <i class="pi pi-external-link text-[11px]"></i>Открыть на карте

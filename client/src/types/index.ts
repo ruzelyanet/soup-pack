@@ -77,8 +77,6 @@ export interface OrderSet {
     name: string
     slug: string
     description?: string
-    banner?: string
-    showInCatalog?: boolean
     items: Array<{ product: Product; qty: number }>
     pricing?: (ProductPricing & { itemsTotal?: number }) | null
 }

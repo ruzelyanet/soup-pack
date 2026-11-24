@@ -41,9 +41,8 @@ export const useCatalog = defineStore('catalog', () => {
                     'pagination[pageSize]': 100,
                 })),
                 api.get('/order-sets' + qs({
-                    populate: { items: { populate: { product: { populate: ['image'] } } }, banner: true },
+                    populate: { items: { populate: { product: { populate: ['image'] } } } },
                     sort: 'createdAt:desc',
-                    'filters[showInCatalog][$eq]': true,
                     'pagination[pageSize]': 50,
                 })),
                 api.get('/banners' + qs({
@@ -82,8 +81,6 @@ export const useCatalog = defineStore('catalog', () => {
                 name: s.name,
                 slug: s.slug,
                 description: s.description,
-                showInCatalog: s.showInCatalog,
-                banner: s.banner?.url,
                 items: (s.items ?? []).map((it: any) => ({
                     product: enrich(it.product as Product),
                     qty: it.qty,

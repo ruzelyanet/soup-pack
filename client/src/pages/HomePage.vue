@@ -16,7 +16,7 @@ const auth = useAuth()
 const ui = useUi()
 const router = useRouter()
 
-const sets = computed(() => catalog.sets.filter((s) => s.showInCatalog))
+const sets = computed(() => catalog.sets)
 
 /** Товары секции: для «Хитов» — тег «хит», для «Наборов» — пусто (рендерим наборы), иначе — ручной список. */
 function sectionProducts(s: HomeSection): Product[] {

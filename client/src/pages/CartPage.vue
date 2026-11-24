@@ -52,7 +52,7 @@ const cards = computed(() => cart.items.map((it: CartItem, idx: number) => {
         idx,
         kind: 'set' as const,
         name: s?.name || it.name || 'Набор',
-        img: s?.banner || it.image,
+        img: it.image,
         variant: 'default' as const,
         tint: 'tom',
         qty: it.qty,

@@ -30,7 +30,7 @@ const loseOpen = ref(false)
 const loseReason = ref('не дозвонились')
 const loseNote = ref('')
 const editOpen = ref(false)
-const editForm = reactive({ name: '', phone: '', comment: '', type: 'individual' as 'individual' | 'shop' })
+const editForm = reactive({ name: '', phone: '', comment: '' })
 const createOrderOpen = ref(false)
 
 const request = computed<RequestRow | null>(() => data.value?.request || null)
@@ -52,7 +52,6 @@ const canMutate = computed(() => {
     return false
 })
 const canReassign = computed(() => auth.role === 'manager' && !request.value?.lockedAt)
-const typeLabel = computed(() => (request.value?.type === 'shop' ? 'Магазин' : 'Физлицо'))
 
 const linkedOrder = computed(() => {
     const r = request.value as (RequestRow & { order?: { id: number; documentId: string; code: string } | null }) | null
@@ -102,7 +101,6 @@ async function fetchData() {
             editForm.name = data.value.request.name
             editForm.phone = data.value.request.phone
             editForm.comment = data.value.request.comment || ''
-            editForm.type = data.value.request.type
         }
     } catch (e: any) {
         if (e?.response?.status === 404) router.push('/requests')
@@ -210,7 +208,6 @@ async function saveEdit() {
             name: editForm.name.trim(),
             phone: editForm.phone.trim(),
             comment: editForm.comment,
-            type: editForm.type,
         })
         editOpen.value = false
         await fetchData()
@@ -286,7 +283,7 @@ async function refreshFromBanner() {
 </script>
 
 <template>
-    <AppTopbar :title="request?.code || 'Заявка'" :subtitle="request ? `${typeLabel} · ${request.source}` : ''" back="/requests">
+    <AppTopbar :title="request?.code || 'Заявка'" :subtitle="request ? `Источник: ${request.source}` : ''" back="/requests">
         <template #actions>
             <template v-if="request">
                 <Button v-if="canConvert" label="Создать заказ" icon="pi pi-plus" severity="primary"
@@ -436,19 +433,6 @@ async function refreshFromBanner() {
 
     <Dialog v-model:visible="editOpen" modal header="Редактировать" :style="{ width: '440px' }" dismissable-mask>
         <div class="space-y-3">
-            <div>
-                <label class="text-xs font-bold uppercase tracking-wider text-ink-400">Тип</label>
-                <div class="mt-1 grid grid-cols-2 gap-2">
-                    <button type="button"
-                            class="rounded-xl py-2 text-sm font-semibold border transition"
-                            :class="editForm.type === 'individual' ? 'bg-ink-900 text-cream-50 border-ink-900' : 'border-ink-200 hover:border-ink-400'"
-                            @click="editForm.type = 'individual'">Физлицо</button>
-                    <button type="button"
-                            class="rounded-xl py-2 text-sm font-semibold border transition"
-                            :class="editForm.type === 'shop' ? 'bg-ink-900 text-cream-50 border-ink-900' : 'border-ink-200 hover:border-ink-400'"
-                            @click="editForm.type = 'shop'">Магазин</button>
-                </div>
-            </div>
             <div>
                 <label class="text-xs font-bold uppercase tracking-wider text-ink-400">Имя</label>
                 <input v-model="editForm.name"

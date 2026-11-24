@@ -9,7 +9,7 @@ import { productImg } from '@/services/api'
 const router = useRouter()
 const catalog = useCatalog()
 
-const sets = computed(() => catalog.sets.filter((s) => s.showInCatalog))
+const sets = computed(() => catalog.sets)
 
 function fmt(v: number) {
     return new Intl.NumberFormat('ru-RU').format(v) + ' сум'

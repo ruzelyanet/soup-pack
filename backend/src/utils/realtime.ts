@@ -4,7 +4,6 @@ import { EventEmitter } from 'node:events'
 export type RequestSummary = {
     id: number
     code: string
-    type: 'individual' | 'shop'
     name: string
     source: 'manual' | 'form' | 'api'
     sourceDetail: string | null

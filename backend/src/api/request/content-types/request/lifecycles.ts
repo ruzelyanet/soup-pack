@@ -16,12 +16,11 @@ export default {
             if (!settings?.telegramEnabled) return
             if (!settings.telegramBotToken || !settings.telegramChatIds) return
 
-            const typeLabel = result.type === 'shop' ? 'Магазин' : 'Физлицо'
             const text =
                 `🆕 <b>Новая заявка ${escapeHtml(result.code)}</b>\n` +
-                `${escapeHtml(typeLabel)} · ${escapeHtml(result.source || 'manual')}\n` +
+                `Источник: ${escapeHtml(result.source || 'manual')}\n` +
                 `${escapeHtml(result.name)} · ${escapeHtml(result.phone)}` +
-                (result.sourceDetail ? `\nИсточник: ${escapeHtml(result.sourceDetail)}` : '')
+                (result.sourceDetail ? `\nДетали: ${escapeHtml(result.sourceDetail)}` : '')
 
             await sendTelegram(settings.telegramBotToken, settings.telegramChatIds, text, strapi.log)
         } catch (e: any) {

@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRoute } from 'vue-router'
 import BrandLogo from '@/components/BrandLogo.vue'
 import { api } from '@/services/api'
 import { useAuth } from '@/stores/auth'
 
-const router = useRouter()
 const route = useRoute()
 const auth = useAuth()
 
@@ -30,7 +29,9 @@ async function enter() {
         if (!token || !employee) throw new Error('Пустой ответ сервера')
         auth.setSession(token, employee)
         const to = (route.query.redirect as string) || '/'
-        router.push(to)
+        // Hard-nav по той же причине, что и в logout: stale Vite chunk у dynamic import
+        // роняет router.push мимо .catch(). Свежий index.html → свежие chunks.
+        window.location.href = to
     } catch (e: any) {
         const code = e?.response?.data?.error?.message
         if (code === 'INVALID_CREDENTIALS') {

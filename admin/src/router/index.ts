@@ -60,6 +60,11 @@ const router = createRouter({
 
 router.beforeEach((to) => {
     const auth = useAuth()
+    // Залогинен и пытается открыть /login → на главную (или куда просил через ?redirect).
+    if (to.name === 'login' && auth.isAuthed) {
+        const r = to.query?.redirect
+        return typeof r === 'string' && r !== '/login' ? r : { name: 'dashboard' }
+    }
     if (to.meta?.public) return true
     if (!auth.isAuthed) {
         return { name: 'login', query: { redirect: to.fullPath } }
@@ -69,6 +74,15 @@ router.beforeEach((to) => {
         return { name: 'orders' }
     }
     return true
+})
+
+// Stale chunk после Vite-инвалидации или деплоя: dynamic import падает TypeError'ом,
+// Vue Router отдаёт его через onError, а не reject навигации. Жёстко перезагружаем.
+router.onError((err, to) => {
+    const msg = String(err?.message || err)
+    if (/dynamically imported module|Importing a module script failed|Failed to fetch dynamically/i.test(msg)) {
+        window.location.href = to?.fullPath || '/'
+    }
 })
 
 export default router

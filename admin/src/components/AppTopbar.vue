@@ -39,7 +39,11 @@ function goBack() {
         </button>
         <div class="min-w-0">
             <h1 class="font-display font-extrabold text-2xl leading-tight truncate">{{ title }}</h1>
-            <div v-if="subtitle" class="text-sm text-ink-400 mt-0.5 truncate">{{ subtitle }}</div>
+            <div v-if="$slots.subtitle || subtitle" class="mt-0.5">
+                <slot name="subtitle">
+                    <div class="text-sm text-ink-400 truncate">{{ subtitle }}</div>
+                </slot>
+            </div>
         </div>
         <div class="ml-auto flex items-center gap-2">
             <slot name="actions" />

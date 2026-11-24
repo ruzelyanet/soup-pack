@@ -21,7 +21,6 @@ export default factories.createCoreController('api::request.request' as any, ({ 
         const q = ctx.query || {}
         const scope: Scope = (q.scope as Scope) || (role === 'manager' ? 'all' : 'queue')
         const filters: Record<string, any> = { archived: false }
-        if (q.type) filters.type = q.type
         if (q.outcome) filters.outcome = q.outcome
         if (q.columnId) filters.column = Number(q.columnId)
         if (q.q) {
@@ -61,7 +60,10 @@ export default factories.createCoreController('api::request.request' as any, ({ 
         const [rows, total] = await Promise.all([
             strapi.db.query('api::request.request').findMany({
                 where: filters,
-                populate: ['column', 'assignee', 'client'],
+                populate: {
+                    column: true, assignee: true, client: true,
+                    goalStates: { populate: ['goal'] },
+                },
                 orderBy: [{ position: 'asc' as const }, { id: 'asc' as const }],
                 limit: pageSize,
                 offset: (page - 1) * pageSize,
@@ -110,12 +112,10 @@ export default factories.createCoreController('api::request.request' as any, ({ 
         if (!['manager', 'duty'].includes(employee.role)) return ctx.forbidden('FORBIDDEN_ROLE')
         const body = (ctx.request.body?.data || ctx.request.body) as any
         if (!body) return ctx.badRequest('body is required')
-        if (!['individual', 'shop'].includes(body.type)) return ctx.badRequest('invalid type')
 
         try {
             const created = await strapi.service('api::request.request').createRequest(
                 {
-                    type: body.type,
                     name: body.name,
                     phone: body.phone,
                     values: body.values,
@@ -155,10 +155,6 @@ export default factories.createCoreController('api::request.request' as any, ({ 
         const patch: Record<string, any> = {}
         for (const k of ['name', 'phone', 'comment', 'sourceDetail'] as const) {
             if (k in body) patch[k] = body[k]
-        }
-        if ('type' in body) {
-            if (!['individual', 'shop'].includes(body.type)) return ctx.badRequest('invalid type')
-            patch.type = body.type
         }
         if ('values' in body) patch.values = body.values
         if ('extra' in body) patch.extra = body.extra

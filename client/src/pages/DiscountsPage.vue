@@ -27,6 +27,8 @@ const discountCards = computed(() => {
         description?: string
         image?: string
         variant?: string
+        /** Для наборов — превью товаров (чтобы показать стек кружков). */
+        setItems?: Array<{ name: string; image: string }>
         percent: number
         oldPrice: number
         newPrice: number
@@ -61,7 +63,10 @@ const discountCards = computed(() => {
             link: '/set/' + s.slug,
             name: s.name,
             description: s.description || '',
-            image: s.banner,
+            setItems: (s.items || []).map((it: any) => ({
+                name: it.product?.name || '',
+                image: productImg(it.product as any),
+            })),
             percent: pr.discountPercent,
             oldPrice: pr.basePrice,
             newPrice: pr.finalPrice,
@@ -110,9 +115,34 @@ const discountCards = computed(() => {
                         class="group relative bg-sf rounded-[24px] overflow-hidden shadow-[0_1px_0_var(--color-ln)] flex gap-3 text-ink">
                 <!-- Image side -->
                 <div class="shrink-0 w-[128px] h-[128px] bg-tint-tom flex items-center justify-center relative overflow-hidden">
-                    <img v-if="card.image" :src="card.image" :alt="card.name"
-                         class="absolute inset-0 w-full h-full object-cover" />
-                    <SoupPuck v-else :variant="(card.variant as any) ?? 'default'" :size="100" />
+                    <!-- Набор: стек кружочков товаров (визуально явно «это набор») -->
+                    <template v-if="card.kind === 'set'">
+                        <div class="relative flex items-center justify-center">
+                            <template v-for="(it, idx) in card.setItems?.slice(0, 3)" :key="idx">
+                                <div class="size-12 rounded-full overflow-hidden bg-white flex items-center justify-center text-ink text-[11px] font-bold"
+                                     :class="idx > 0 ? '-ml-3' : ''"
+                                     :style="`box-shadow: 0 0 0 2px #fff, 0 4px 10px rgba(60,20,0,.15); z-index: ${10 - idx};`">
+                                    <img v-if="it.image" :src="it.image" :alt="it.name"
+                                         class="w-full h-full object-cover" />
+                                    <span v-else>{{ (it.name || '?').slice(0, 2).toUpperCase() }}</span>
+                                </div>
+                            </template>
+                            <div v-if="(card.setItems?.length ?? 0) > 3"
+                                 class="size-12 rounded-full -ml-3 flex items-center justify-center bg-ink text-white text-[11px] font-bold"
+                                 style="box-shadow: 0 0 0 2px #fff; z-index: 0;">
+                                +{{ (card.setItems?.length ?? 0) - 3 }}
+                            </div>
+                        </div>
+                        <!-- Нижний чип «Набор» чтобы явно пометить -->
+                        <span class="absolute bottom-2 left-1/2 -translate-x-1/2 bg-ink text-cream-50 text-[9px] font-extrabold tracking-wider px-2 py-0.5 rounded-full">
+                            НАБОР
+                        </span>
+                    </template>
+                    <template v-else>
+                        <img v-if="card.image" :src="card.image" :alt="card.name"
+                             class="absolute inset-0 w-full h-full object-cover" />
+                        <SoupPuck v-else :variant="(card.variant as any) ?? 'default'" :size="100" />
+                    </template>
                     <!-- Percent chip -->
                     <span class="absolute top-2 left-2 bg-acc text-white font-extrabold text-[12px] tracking-wider px-2.5 py-1 rounded-full">
                         −{{ card.percent }}%

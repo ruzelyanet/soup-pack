@@ -5,7 +5,6 @@
   "options": { "draftAndPublish": false },
   "attributes": {
     "code":          { "type": "string", "unique": true, "required": true },
-    "type":          { "type": "enumeration", "enum": ["individual", "shop"], "default": "individual", "required": true },
     "name":          { "type": "string", "required": true },
     "phone":         { "type": "string", "required": true },
     "values":        { "type": "json" },

@@ -29,11 +29,9 @@ async function createEmpty() {
         if (!name?.trim()) return
         const slug = prompt('Slug (латиницей, без пробелов):', name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''))
         if (!slug?.trim()) return
-        const type = confirm('Магазины? (OK — да, Отмена — физлицо)') ? 'shop' : 'individual'
         const created = await RequestForms.create({
             name: name.trim(),
             slug: slug.trim(),
-            type,
             isActive: true,
             fields: [],
         })
@@ -70,7 +68,7 @@ onMounted(load)
                  @click="router.push(`/request-forms/${f.id}`)">
                 <div class="min-w-0 flex-1">
                     <div class="font-display font-bold truncate">{{ f.name }}</div>
-                    <div class="text-xs text-ink-400 truncate">/f/{{ f.slug }} · {{ f.type === 'shop' ? 'Магазины' : 'Физлица' }}</div>
+                    <div class="text-xs text-ink-400 truncate">/f/{{ f.slug }}</div>
                 </div>
                 <span v-if="!f.isActive" class="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase bg-ink-100 text-ink-500">Выключена</span>
                 <span v-if="f.requireApiKey" class="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase bg-saffron-300/80 text-ink-900">Только с ключом</span>

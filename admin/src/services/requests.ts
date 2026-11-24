@@ -1,12 +1,11 @@
 import { api, qs } from './api'
 import type {
-    RequestColumn, RequestFull, RequestGoal, RequestRow, RequestType,
+    RequestColumn, RequestFull, RequestGoal, RequestRow,
     RequestValueField,
 } from './resources'
 
 type ListParams = {
     scope?: 'queue' | 'mine' | 'all'
-    type?: RequestType
     outcome?: 'open' | 'converted' | 'lost'
     columnId?: number
     q?: string
@@ -82,7 +81,6 @@ export const Requests = {
         return res.data?.data as RequestFull
     },
     async create(data: {
-        type: RequestType
         name: string
         phone: string
         values?: RequestValueField[]

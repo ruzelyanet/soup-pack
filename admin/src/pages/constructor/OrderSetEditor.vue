@@ -2,7 +2,6 @@
 import { computed, ref, watch } from 'vue'
 import { OrderSets, type OrderSet, type Product } from '@/services/resources'
 import { mediaUrl } from '@/services/api'
-import ImageUploader from '@/components/ImageUploader.vue'
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
 import Drawer from 'primevue/drawer'
@@ -27,9 +26,6 @@ type Draft = {
     name: string
     slug: string
     description: string
-    showInCatalog: boolean
-    bannerUrl: string
-    linkUrl: string
     items: Array<{ productId: number; qty: number }>
 }
 
@@ -38,7 +34,7 @@ const edit = ref<Draft>(emptyDraft())
 function emptyDraft(): Draft {
     return {
         documentId: '', name: '', slug: '', description: '',
-        showInCatalog: true, bannerUrl: '', linkUrl: '', items: [],
+        items: [],
     }
 }
 
@@ -49,9 +45,6 @@ function fillFromSet(s?: OrderSet | null) {
         name: s.name,
         slug: s.slug || '',
         description: s.description || '',
-        showInCatalog: !!s.showInCatalog,
-        bannerUrl: s.banner?.url || '',
-        linkUrl: s.linkUrl || '',
         items: (s.items || []).map((it) => ({ productId: it.product?.id || 0, qty: it.qty })),
     }
 }
@@ -110,8 +103,6 @@ async function save() {
         name: edit.value.name,
         slug: edit.value.slug || edit.value.name.toLowerCase().replace(/\s+/g, '-'),
         description: edit.value.description,
-        showInCatalog: edit.value.showInCatalog,
-        linkUrl: edit.value.linkUrl,
         items: edit.value.items.map((it) => {
             const p = productOf(it.productId)
             return { product: p?.documentId ?? null, qty: it.qty }
@@ -217,18 +208,6 @@ async function save() {
                         class="block w-full rounded-xl border-2 border-dashed border-ink-200 hover:border-ink-400 text-ink-500 font-semibold text-sm py-3 text-center transition">
                 Скидки на набор — в разделе «Скидки»
             </RouterLink>
-
-            <label class="inline-flex items-center gap-2 text-sm font-medium">
-                <input type="checkbox" v-model="edit.showInCatalog" class="size-5" />
-                Показывать в каталоге
-            </label>
-
-            <ImageUploader v-model="edit.bannerUrl" aspect="card" label="Баннер набора для каталога" />
-            <div>
-                <label class="text-xs font-bold uppercase tracking-wider text-ink-400">Ссылка при клике</label>
-                <input v-model="edit.linkUrl"
-                       class="mt-1 w-full rounded-xl border border-ink-200 px-4 py-3 focus:outline-none focus:border-ink-900" />
-            </div>
         </div>
 
         <template #footer>

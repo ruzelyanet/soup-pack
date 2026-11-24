@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { RouterLink } from 'vue-router'
 import BrandLogo from '@/components/BrandLogo.vue'
 import { useAuth, type StaffRole } from '@/stores/auth'
 import { useRequestsFeed } from '@/stores/requestsFeed'
@@ -8,7 +8,6 @@ import { useOrdersFeed } from '@/stores/ordersFeed'
 import { useNotifyPrefs, requestSystemPermission } from '@/services/notifyPrefs'
 
 const auth = useAuth()
-const router = useRouter()
 const feed = useRequestsFeed()
 const ordersFeed = useOrdersFeed()
 const prefs = useNotifyPrefs()
@@ -107,7 +106,9 @@ const employeeRoleLabel = computed(() => {
 
 function doLogout() {
     auth.logout()
-    router.push({ name: 'login' })
+    // Hard-nav: Vue Router dynamic import ловит stale Vite chunk и падает TypeError'ом
+    // мимо .catch(). Жёсткая перезагрузка — свежий index.html, свежие chunks.
+    window.location.href = '/login'
 }
 </script>
 

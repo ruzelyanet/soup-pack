@@ -32,7 +32,7 @@ async function reload() {
             // Strapi 5: id пересоздаётся при update, поэтому сортируем по стабильному полю.
             // populate с image, чтобы показать превью продуктов в наборе.
             OrderSets.listPaged({
-                populate: { items: { populate: { product: { populate: ['image'] } } }, banner: true },
+                populate: { items: { populate: { product: { populate: ['image'] } } } },
                 sort: 'createdAt:desc',
                 'pagination[page]': page.value + 1,
                 'pagination[pageSize]': pageSize.value,
@@ -163,13 +163,6 @@ function openCard(row: OrderSet) {
                         <span class="inline-block whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold"
                               :class="data.publishedAt ? 'bg-olive-500/15 text-olive-600' : 'bg-yellow-500/15 text-yellow-700'">
                             {{ data.publishedAt ? 'Опубликован' : 'Не опубликован' }}
-                        </span>
-                    </template>
-                </Column>
-                <Column header="В каталоге" style="width: 120px">
-                    <template #body="{ data }">
-                        <span class="text-xs" :class="data.showInCatalog ? 'text-olive-600' : 'text-ink-400'">
-                            {{ data.showInCatalog ? 'Показан' : 'Скрыт' }}
                         </span>
                     </template>
                 </Column>

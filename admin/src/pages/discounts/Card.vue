@@ -73,7 +73,10 @@ async function loadPreview() {
         const res = await api.post('/staff/discounts/preview', { discountId: d.value.id, withActive: withActive.value })
         const p = res.data?.data
         if (p?.products) p.products = p.products.map((x: any) => ({ ...x, image: x.image ? mediaUrl(x.image) : null }))
-        if (p?.sets) p.sets = p.sets.map((x: any) => ({ ...x, banner: x.banner ? mediaUrl(x.banner) : null }))
+        if (p?.sets) p.sets = p.sets.map((x: any) => ({
+            ...x,
+            items: (x.items || []).map((it: any) => ({ ...it, image: it.image ? mediaUrl(it.image) : null })),
+        }))
         preview.value = p
     } catch {
         preview.value = null

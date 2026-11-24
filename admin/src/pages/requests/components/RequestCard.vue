@@ -19,14 +19,15 @@ const emit = defineEmits<{
     (e: 'open', req: RequestRow): void
     (e: 'dragstart', req: RequestRow, ev: DragEvent): void
     (e: 'convert', req: RequestRow): void
+    (e: 'toggle-goal', req: RequestRow, stateId: number, done: boolean): void
 }>()
 
-const typeLabel = computed(() => props.request.type === 'shop' ? 'Магазин' : 'Физлицо')
-const typeClass = computed(() =>
-    props.request.type === 'shop'
-        ? 'bg-saffron-300/80 text-ink-900'
-        : 'bg-olive-500/15 text-olive-500',
+const goalStates = computed(() =>
+    (props.request.goalStates || [])
+        .filter((s) => !s.removed)
+        .sort((a, b) => (a.goal?.position ?? 0) - (b.goal?.position ?? 0)),
 )
+const doneCount = computed(() => goalStates.value.filter((s) => s.done).length)
 
 const waitingMinutes = computed(() => {
     if (!props.request || props.request.acceptedAt) return null
@@ -62,7 +63,6 @@ function onDragStart(ev: DragEvent) {
         <div class="flex items-center gap-2 mb-1.5">
             <span class="text-[10px] font-bold uppercase tracking-wider text-ink-400">{{ request.code }}</span>
             <span v-if="isUnseen" class="rounded-full px-1.5 py-0.5 text-[10px] font-bold uppercase bg-tomato-500 text-cream-50">Новая</span>
-            <span class="rounded-full px-1.5 py-0.5 text-[10px] font-bold uppercase" :class="typeClass">{{ typeLabel }}</span>
             <span v-if="duplicateCode" class="rounded-full px-1.5 py-0.5 text-[10px] font-bold uppercase bg-tomato-500/15 text-tomato-500" :title="`Открытая заявка ${duplicateCode}`">
                 Дубль
             </span>
@@ -76,6 +76,23 @@ function onDragStart(ev: DragEvent) {
         <div v-if="request.assignee" class="mt-2 flex items-center gap-1.5 text-xs text-ink-500">
             <i class="pi pi-user text-[10px]"></i>
             <span class="truncate">{{ request.assignee.fullName }}</span>
+        </div>
+
+        <!-- Цели колонки — чеклист прямо на карточке -->
+        <div v-if="goalStates.length" class="mt-2 pt-2 border-t border-ink-100">
+            <div class="text-[10px] font-bold uppercase tracking-wider text-ink-400 mb-1">
+                Цели: {{ doneCount }} / {{ goalStates.length }}
+            </div>
+            <ul class="list-none p-0 m-0 space-y-1">
+                <li v-for="s in goalStates" :key="s.id" class="flex items-center gap-2 text-xs">
+                    <input type="checkbox" :checked="s.done" class="size-3.5 shrink-0 cursor-pointer"
+                           @click.stop
+                           @change="(ev) => emit('toggle-goal', request, s.id, (ev.target as HTMLInputElement).checked)" />
+                    <span class="truncate" :class="s.done ? 'line-through text-ink-400' : 'text-ink-700'">
+                        {{ s.goal?.text || s.goalText || '—' }}
+                    </span>
+                </li>
+            </ul>
         </div>
 
         <div class="mt-3 flex items-center gap-2">

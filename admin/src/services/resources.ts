@@ -28,8 +28,6 @@ export interface HomeSection extends Base {
 export interface OrderSetItem { product: Product | null; qty: number }
 export interface OrderSet   extends Base {
     name: string; slug: string; description?: string
-    showInCatalog: boolean
-    linkUrl?: string; banner?: { url: string } | null
     items: OrderSetItem[]
     createdAt?: string; updatedAt?: string
     /** null = черновик; строка ISO = опубликован. */
@@ -186,7 +184,6 @@ export interface DashboardData {
     to: string
     unassignedRequestsCount: number
     avgTimeToAcceptMinutes: number
-    conversionByType: Record<string, { requests: number; converted: number; rate: number }>
     conversionByEmployee: Array<{ id: number; name: string; requests: number; converted: number; rate: number }>
     salesTotal: number
     receiptsTotal: number
@@ -272,7 +269,6 @@ export interface Discount extends Base {
 
 // --- Заявки ---
 
-export type RequestType = 'individual' | 'shop'
 export type RequestOutcome = 'open' | 'converted' | 'lost'
 export type RequestSource = 'manual' | 'form' | 'api'
 export type ColumnKind = 'new' | 'custom' | 'done'
@@ -296,7 +292,7 @@ export interface RequestGoalState extends Base {
     done: boolean
     removed: boolean
     goalText?: string | null
-    goal?: { id: number } | null
+    goal?: { id: number; text?: string; position?: number } | null
     column?: { id: number } | null
 }
 
@@ -312,7 +308,6 @@ export interface RequestValueField { key: string; label: string; value: unknown 
 
 export interface RequestRow extends Base {
     code: string
-    type: RequestType
     name: string
     phone: string
     values?: RequestValueField[] | null
@@ -335,6 +330,7 @@ export interface RequestRow extends Base {
     assignee?: Employee | null
     client?: Client | null
     createdByEmployee?: Employee | null
+    goalStates?: RequestGoalState[]
 }
 
 export interface RequestFull {
@@ -360,7 +356,6 @@ export interface FormFieldSchema {
 export interface RequestForm extends Base {
     name: string
     slug: string
-    type: RequestType
     isActive: boolean
     title?: string | null
     description?: string | null

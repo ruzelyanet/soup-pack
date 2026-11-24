@@ -20,7 +20,6 @@ const columns = ref<RequestColumn[]>([])
 const items = ref<RequestRow[]>([])
 const loading = ref(true)
 
-const type = ref<string>('')
 const outcome = ref<string>('')
 const columnId = ref<string>('')
 const q = ref('')
@@ -31,7 +30,6 @@ const tableWrap = ref<HTMLElement | null>(null)
 const pendingIds = new Set<number>()
 let batchTimer: number | null = null
 
-const typeLabel: Record<string, string> = { individual: 'Физлицо', shop: 'Магазин' }
 const outcomeLabel: Record<string, string> = { open: 'Открыта', converted: 'В заказе', lost: 'Закрыта' }
 
 const columnName = computed(() => {
@@ -42,7 +40,6 @@ const columnName = computed(() => {
 
 function listParams(extra: Record<string, any> = {}): Record<string, any> {
     const p: Record<string, any> = { scope: 'all', ...extra }
-    if (type.value) p.type = type.value
     if (outcome.value) p.outcome = outcome.value
     if (columnId.value) p.columnId = Number(columnId.value)
     if (q.value.trim()) p.q = q.value.trim()
@@ -113,13 +110,12 @@ function scrollToTop() {
 
 function resetFilters() {
     notInFilter.value = 0
-    type.value = ''
     outcome.value = ''
     columnId.value = ''
     q.value = ''
 }
 
-watch([type, outcome, columnId], () => { notInFilter.value = 0; page.value = 0; fetchAll() })
+watch([outcome, columnId], () => { notInFilter.value = 0; page.value = 0; fetchAll() })
 watch([page, pageSize], fetchAll)
 
 const offs: Array<() => void> = []
@@ -153,11 +149,6 @@ onBeforeUnmount(() => {
                     <label for="requests-search">Поиск: имя, телефон, код</label>
                 </FloatLabel>
             </div>
-            <select v-model="type" class="rounded-xl border border-ink-200 px-3 py-2.5 bg-white">
-                <option value="">Все типы</option>
-                <option value="individual">Физлица</option>
-                <option value="shop">Магазины</option>
-            </select>
             <select v-model="outcome" class="rounded-xl border border-ink-200 px-3 py-2.5 bg-white">
                 <option value="">Любой исход</option>
                 <option value="open">Открытые</option>
@@ -208,9 +199,6 @@ onBeforeUnmount(() => {
                             </span>
                         </div>
                     </template>
-                </Column>
-                <Column header="Тип" style="width: 110px">
-                    <template #body="{ data }">{{ typeLabel[(data as RequestRow).type] }}</template>
                 </Column>
                 <Column header="Имя" field="name" />
                 <Column header="Телефон" field="phone" style="width: 160px" />

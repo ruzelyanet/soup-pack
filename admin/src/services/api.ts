@@ -27,7 +27,7 @@ api.interceptors.response.use(
             const auth = useAuth()
             auth.logout()
             if (!location.pathname.endsWith('/login')) {
-                location.href = '/admin/login'
+                location.href = '/login'
             }
         }
         if (import.meta.env.DEV) {

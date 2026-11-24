@@ -3,6 +3,7 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import Button from 'primevue/button'
 import { useToast } from 'primevue/usetoast'
+import { useConfirm } from 'primevue/useconfirm'
 import AppTopbar from '@/components/AppTopbar.vue'
 import BoardColumn from './components/BoardColumn.vue'
 import CreateRequestDialog from './components/CreateRequestDialog.vue'
@@ -10,19 +11,59 @@ import ColumnDialog from './components/ColumnDialog.vue'
 import ColumnGoalsDialog from './components/ColumnGoalsDialog.vue'
 import { Requests } from '@/services/requests'
 import { Settings } from '@/services/settings'
-import type { RequestColumn, RequestRow, RequestType } from '@/services/resources'
+import type { RequestColumn, RequestRow } from '@/services/resources'
 import { useAuth } from '@/stores/auth'
 import { useRequestsFeed } from '@/stores/requestsFeed'
 
 const router = useRouter()
 const auth = useAuth()
 const toast = useToast()
+const confirmSvc = useConfirm()
+
+const columnsBeforeDone = computed(() => columns.value.filter((c) => c.kind !== 'done'))
+const doneColumn = computed(() => columns.value.find((c) => c.kind === 'done') || null)
+
+async function onToggleGoal(req: RequestRow, stateId: number, done: boolean) {
+    try {
+        await Requests.toggleGoal(req.id, stateId, done)
+        // Обновим локально, чтобы чекбокс не мигал
+        const r = items.value.find((x) => x.id === req.id)
+        const st = r?.goalStates?.find((s) => s.id === stateId)
+        if (st) st.done = done
+    } catch (e: any) {
+        toast.add({ severity: 'error', summary: 'Не удалось сохранить цель',
+            detail: e?.response?.data?.error?.message || e?.message, life: 3000 })
+        await fetchAll()
+    }
+}
+
+function askDeleteColumn(id: number) {
+    const col = columns.value.find((c) => c.id === id)
+    if (!col) return
+    confirmSvc.require({
+        message: `Удалить колонку «${col.name}»? Заявки из неё нужно будет перенести вручную.`,
+        header: 'Удаление колонки',
+        icon: 'pi pi-exclamation-triangle',
+        acceptLabel: 'Удалить',
+        rejectLabel: 'Отмена',
+        acceptClass: 'p-button-danger',
+        accept: async () => {
+            try {
+                await Requests.deleteColumn(id)
+                toast.add({ severity: 'success', summary: 'Удалено', life: 1500 })
+                await fetchAll()
+            } catch (e: any) {
+                toast.add({ severity: 'error', summary: 'Ошибка',
+                    detail: e?.response?.data?.error?.message || e?.message, life: 3500 })
+            }
+        },
+    })
+}
 const feed = useRequestsFeed()
 
 const columns = ref<RequestColumn[]>([])
 const items = ref<RequestRow[]>([])
 const loading = ref(true)
-const typeFilter = ref<RequestType | 'all'>('all')
 const scope = ref<'all' | 'mine'>(auth.role === 'manager' ? 'all' : 'mine')
 const sla = ref<{ yellowAfterMin: number; redAfterMin: number }>({ yellowAfterMin: 10, redAfterMin: 30 })
 
@@ -42,7 +83,6 @@ const canManage = computed(() => auth.role === 'manager')
 
 function listParams(extra: Record<string, any> = {}): Record<string, any> {
     const params: Record<string, any> = { outcome: 'open', ...extra }
-    if (typeFilter.value !== 'all') params.type = typeFilter.value
     if (auth.role === 'duty' && scope.value === 'mine') params.scope = 'mine'
     else if (auth.role === 'duty') params.scope = 'all'
     else params.scope = scope.value === 'mine' ? 'mine' : 'all'
@@ -203,25 +243,12 @@ onUnmounted(() => {
 <template>
     <AppTopbar title="Заявки" subtitle="Входящие обращения с конвейером">
         <template #actions>
-            <Button v-if="canManage" label="Колонки" icon="pi pi-cog" severity="secondary" outlined @click="openColumnDialog(null)" />
             <Button label="Все заявки" icon="pi pi-list" severity="secondary" outlined @click="router.push('/requests/all')" />
             <Button label="+ Заявка" icon="pi pi-plus" @click="createOpen = true" />
         </template>
     </AppTopbar>
 
     <div class="px-8 py-4 flex items-center gap-3 flex-wrap">
-        <div class="flex items-center gap-1 bg-ink-50 rounded-xl p-1">
-            <button type="button" class="rounded-lg px-3 py-1.5 text-sm font-semibold"
-                    :class="typeFilter === 'all' ? 'bg-ink-900 text-cream-50' : 'text-ink-500 hover:bg-ink-100'"
-                    @click="typeFilter = 'all'; fetchAll()">Все типы</button>
-            <button type="button" class="rounded-lg px-3 py-1.5 text-sm font-semibold"
-                    :class="typeFilter === 'individual' ? 'bg-ink-900 text-cream-50' : 'text-ink-500 hover:bg-ink-100'"
-                    @click="typeFilter = 'individual'; fetchAll()">Физлица</button>
-            <button type="button" class="rounded-lg px-3 py-1.5 text-sm font-semibold"
-                    :class="typeFilter === 'shop' ? 'bg-ink-900 text-cream-50' : 'text-ink-500 hover:bg-ink-100'"
-                    @click="typeFilter = 'shop'; fetchAll()">Магазины</button>
-        </div>
-
         <div class="flex items-center gap-1 bg-ink-50 rounded-xl p-1">
             <button type="button" class="rounded-lg px-3 py-1.5 text-sm font-semibold"
                     :class="scope === 'all' ? 'bg-ink-900 text-cream-50' : 'text-ink-500 hover:bg-ink-100'"
@@ -234,15 +261,43 @@ onUnmounted(() => {
 
     <div class="px-8 pb-8 overflow-x-auto">
         <div class="flex gap-3 min-h-[400px]">
-            <BoardColumn
-                v-for="col in columns"
-                :key="col.id"
-                :column="col"
-                :requests="requestsByColumn(col.id)"
+            <template v-for="col in columnsBeforeDone" :key="col.id">
+                <BoardColumn
+                    :column="col"
+                    :requests="requestsByColumn(col.id)"
+                    :can-accept="canAccept"
+                    :can-manage="canManage"
+                    :is-new="col.kind === 'new'"
+                    :is-done="col.kind === 'done'"
+                    :yellow-after="sla.yellowAfterMin"
+                    :red-after="sla.redAfterMin"
+                    :unseen-ids="unseen"
+                    :flash-ids="flashIds"
+                    @accept="onAccept"
+                    @open="onOpen"
+                    @convert="onConvert"
+                    @drop="onDrop"
+                    @create-request="() => createOpen = true"
+                    @manage-goals="openGoalsDialog"
+                    @edit-column="(id) => openColumnDialog(id)"
+                    @delete-column="askDeleteColumn"
+                    @toggle-goal="onToggleGoal"
+                />
+            </template>
+
+            <!-- + Колонка (между custom и done) -->
+            <button v-if="canManage" type="button"
+                    class="shrink-0 w-72 rounded-2xl border-2 border-dashed border-ink-200 text-ink-400 hover:border-tomato-500 hover:text-tomato-500 transition font-semibold text-sm flex items-center justify-center min-h-[72px]"
+                    @click="openColumnDialog(null)">
+                <i class="pi pi-plus mr-2"></i> Колонка
+            </button>
+
+            <BoardColumn v-if="doneColumn"
+                :column="doneColumn"
+                :requests="requestsByColumn(doneColumn.id)"
                 :can-accept="canAccept"
                 :can-manage="canManage"
-                :is-new="col.kind === 'new'"
-                :is-done="col.kind === 'done'"
+                :is-done="true"
                 :yellow-after="sla.yellowAfterMin"
                 :red-after="sla.redAfterMin"
                 :unseen-ids="unseen"
@@ -251,9 +306,10 @@ onUnmounted(() => {
                 @open="onOpen"
                 @convert="onConvert"
                 @drop="onDrop"
-                @create-request="() => createOpen = true"
                 @manage-goals="openGoalsDialog"
                 @edit-column="(id) => openColumnDialog(id)"
+                @delete-column="askDeleteColumn"
+                @toggle-goal="onToggleGoal"
             />
         </div>
 

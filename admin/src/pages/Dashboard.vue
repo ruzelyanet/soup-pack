@@ -143,22 +143,7 @@ const statusColor: Record<string, string> = {
                 </div>
             </div>
 
-            <div class="grid lg:grid-cols-2 gap-5">
-                <div class="bg-white rounded-2xl p-6">
-                    <div class="font-display font-bold text-lg mb-4">Конверсия заявок по типам</div>
-                    <div class="space-y-3">
-                        <div v-for="(b, key) in dashboardData.conversionByType" :key="key" class="flex items-center gap-3">
-                            <div class="w-24 text-sm font-semibold">{{ key === 'shop' ? 'Магазины' : 'Физлица' }}</div>
-                            <div class="flex-1 bg-ink-100 rounded-full h-2 overflow-hidden">
-                                <div class="h-full bg-olive-500" :style="{ width: `${b.rate}%` }"></div>
-                            </div>
-                            <div class="w-28 text-right text-xs text-ink-400">
-                                {{ b.converted }} / {{ b.requests }} · {{ b.rate }}%
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
+            <div class="grid lg:grid-cols-1 gap-5">
                 <div class="bg-white rounded-2xl p-6">
                     <div class="font-display font-bold text-lg mb-4">Конверсия по сотрудникам</div>
                     <div v-if="!dashboardData.conversionByEmployee.length" class="text-sm text-ink-400">

@@ -34,10 +34,6 @@ let tickTimer: number | null = null
 const sourceLabel: Record<RequestSummary['source'], string> = {
     manual: 'Вручную', form: 'Форма на сайте', api: 'API',
 }
-const typeLabel: Record<RequestSummary['type'], string> = {
-    individual: 'Физлицо', shop: 'Магазин',
-}
-
 function formatRel(fromMs: number): string {
     void tick.value // держим реактивность
     const diff = Math.max(0, Date.now() - fromMs)
@@ -109,7 +105,7 @@ function onNew(e: { requestId: number; summary: RequestSummary }) {
         playChime()
         showSystemNotification(
             `Новая заявка · ${e.summary.code}`,
-            `${typeLabel[e.summary.type]} · ${e.summary.name}`,
+            e.summary.name,
             () => openRequest(e.requestId, entry.key),
         )
     }
@@ -136,7 +132,7 @@ function onOverdue(e: { requestId: number; summary: RequestSummary }) {
         playChime()
         showSystemNotification(
             `Заявка ждёт ${entry.waitMin} мин · ${e.summary.code}`,
-            `${typeLabel[e.summary.type]} · ${e.summary.name}`,
+            e.summary.name,
             () => openRequest(e.requestId, entry.key),
         )
     }
@@ -214,7 +210,6 @@ onBeforeUnmount(() => {
                                 </div>
                                 <div class="text-sm text-ink-700 truncate mt-0.5">{{ entry.summary.name }}</div>
                                 <div class="text-[11px] text-ink-400 mt-0.5 truncate">
-                                    {{ typeLabel[entry.summary.type] }} ·
                                     {{ entry.summary.sourceDetail || sourceLabel[entry.summary.source] }}
                                 </div>
                                 <div class="mt-2 flex gap-2">

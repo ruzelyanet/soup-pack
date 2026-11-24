@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useCart } from '@/stores/cart'
 import Icon from '@/components/Icon.vue'
@@ -33,10 +33,33 @@ function isActive(to: string) {
     if (to === '/') return route.path === '/'
     return route.path.startsWith(to)
 }
+
+/** Auto-hide при скролле вниз, показ только при скролле вверх (и в самом верху). */
+const hidden = ref(false)
+let lastY = 0
+const THRESHOLD = 6   // игнор-шум мелких подёргиваний
+const TOP_GUARD = 12  // у самого верха — всегда показываем
+
+function onScroll() {
+    const y = window.scrollY
+    if (y < TOP_GUARD) { hidden.value = false; lastY = y; return }
+    const dy = y - lastY
+    if (Math.abs(dy) < THRESHOLD) return
+    hidden.value = dy > 0
+    lastY = y
+}
+
+onMounted(() => {
+    lastY = window.scrollY
+    window.addEventListener('scroll', onScroll, { passive: true })
+})
+onBeforeUnmount(() => window.removeEventListener('scroll', onScroll))
 </script>
 
 <template>
-    <div class="sticky bottom-0 z-30 flex flex-col gap-2.5 px-3 pt-3">
+    <div class="sticky bottom-0 z-30 overflow-hidden transition-[max-height] duration-300 ease-out"
+         :style="{ maxHeight: hidden ? '0px' : '260px' }">
+        <div class="flex flex-col gap-2.5 px-3 pt-3">
         <!-- Floating cart -->
         <button
             v-if="cart.count > 0 && !route.path.startsWith('/cart') && !route.path.startsWith('/checkout')"
@@ -68,5 +91,6 @@ function isActive(to: string) {
                 {{ t.name }}
             </RouterLink>
         </nav>
+        </div>
     </div>
 </template>

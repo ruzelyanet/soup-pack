@@ -31,7 +31,7 @@ async function reload() {
         const filters = s ? { name: { $containsi: s } } : undefined
         const res = await Products.listPaged({
             populate: ['category', 'image'],
-            sort: 'name:asc',
+            sort: 'createdAt:desc',
             filters,
             'pagination[page]': page.value + 1,
             'pagination[pageSize]': pageSize.value,

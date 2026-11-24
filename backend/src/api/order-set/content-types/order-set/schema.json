@@ -7,9 +7,6 @@
     "name":          { "type": "string", "required": true },
     "slug":          { "type": "uid", "targetField": "name" },
     "description":   { "type": "text" },
-    "showInCatalog": { "type": "boolean", "default": true },
-    "linkUrl":       { "type": "string" },
-    "banner":        { "type": "media", "multiple": false, "allowedTypes": ["images"] },
     "items":         { "type": "component", "repeatable": true, "component": "order.set-item" }
   }
 }

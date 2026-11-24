@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { reactive, ref, watch } from 'vue'
 import Dialog from 'primevue/dialog'
 import Button from 'primevue/button'
+import InputText from 'primevue/inputtext'
 import { Requests } from '@/services/requests'
 import type { RequestColumn } from '@/services/resources'
 import { useToast } from 'primevue/usetoast'
@@ -17,160 +18,98 @@ const emit = defineEmits<{
 }>()
 
 const toast = useToast()
-const current = ref<RequestColumn | null>(null)
-const draft = ref({ name: '', color: '#D63A1C', requireGoals: false })
-const creating = ref(false)
-const newName = ref('')
+const saving = ref(false)
+const error = ref('')
+
+/** Готовая палитра — та же, что в эталоне. */
+const COLOR_PALETTE = [
+    '#D63A1C', '#E88E1B', '#E0B914', '#3F7A2A',
+    '#1E90FF', '#6F42C1', '#B4409C', '#2A1209',
+]
+
+const editingId = ref<number | null>(null)
+const form = reactive({ name: '', color: COLOR_PALETTE[0], requireGoals: false })
 
 watch(() => props.visible, (v) => {
     if (!v) return
-    const target = props.columns.find((c) => c.id === props.initialColumnId)
-    current.value = target || null
+    error.value = ''
+    const target = props.columns.find((c) => c.id === props.initialColumnId) || null
     if (target) {
-        draft.value = {
-            name: target.name,
-            color: target.color || '#D63A1C',
-            requireGoals: Boolean(target.requireGoals),
-        }
+        editingId.value = target.id
+        form.name = target.name
+        form.color = target.color || COLOR_PALETTE[0]
+        form.requireGoals = Boolean(target.requireGoals)
+    } else {
+        editingId.value = null
+        form.name = ''
+        form.color = COLOR_PALETTE[0]
+        form.requireGoals = false
     }
-    creating.value = false
-    newName.value = ''
 })
 
-async function saveCurrent() {
-    if (!current.value) return
-    try {
-        await Requests.updateColumn(current.value.id, {
-            name: draft.value.name,
-            color: draft.value.color,
-            requireGoals: draft.value.requireGoals,
-        })
-        emit('changed')
-        toast.add({ severity: 'success', summary: 'Сохранено', life: 1500 })
-    } catch (e: any) {
-        toast.add({ severity: 'error', summary: 'Ошибка', detail: e?.message, life: 3000 })
+async function onSubmit() {
+    error.value = ''
+    if (!form.name.trim()) {
+        error.value = 'Укажите название колонки'
+        return
     }
-}
-
-async function removeCurrent() {
-    if (!current.value || current.value.kind !== 'custom') return
+    saving.value = true
     try {
-        await Requests.deleteColumn(current.value.id)
+        const payload = {
+            name: form.name.trim(),
+            color: form.color,
+            requireGoals: form.requireGoals,
+        }
+        if (editingId.value != null) {
+            await Requests.updateColumn(editingId.value, payload)
+        } else {
+            await Requests.createColumn(payload)
+        }
         emit('changed')
         emit('update:visible', false)
-        toast.add({ severity: 'success', summary: 'Удалена', life: 1500 })
+        toast.add({ severity: 'success', summary: editingId.value != null ? 'Сохранено' : 'Колонка создана', life: 1500 })
     } catch (e: any) {
-        const code = e?.response?.data?.error?.message
-        if (code === 'COLUMN_NOT_EMPTY') {
-            toast.add({ severity: 'warn', summary: 'Колонка не пуста', detail: 'Перенесите заявки и попробуйте снова', life: 3000 })
-        } else {
-            toast.add({ severity: 'error', summary: 'Ошибка', detail: code || e?.message, life: 3000 })
-        }
-    }
-}
-
-async function createNew() {
-    if (!newName.value.trim()) return
-    try {
-        await Requests.createColumn({ name: newName.value.trim() })
-        emit('changed')
-        creating.value = false
-        newName.value = ''
-        toast.add({ severity: 'success', summary: 'Колонка создана', life: 1500 })
-    } catch (e: any) {
-        toast.add({ severity: 'error', summary: 'Ошибка', detail: e?.message, life: 3000 })
-    }
-}
-
-function pick(c: RequestColumn) {
-    current.value = c
-    draft.value = {
-        name: c.name,
-        color: c.color || '#D63A1C',
-        requireGoals: Boolean(c.requireGoals),
-    }
-}
-
-async function moveLeft() {
-    if (!current.value) return
-    await moveBy(-1)
-}
-async function moveRight() {
-    if (!current.value) return
-    await moveBy(1)
-}
-async function moveBy(delta: number) {
-    if (!current.value) return
-    const customs = props.columns.filter((c) => c.kind === 'custom').sort((a, b) => a.position - b.position)
-    const idx = customs.findIndex((c) => c.id === current.value!.id)
-    if (idx < 0) return
-    const to = idx + delta
-    if (to < 0 || to >= customs.length) return
-    const reordered = [...customs]
-    const [removed] = reordered.splice(idx, 1)
-    reordered.splice(to, 0, removed)
-    try {
-        await Requests.reorderColumns(reordered.map((c) => c.id))
-        emit('changed')
-    } catch (e: any) {
-        toast.add({ severity: 'error', summary: 'Ошибка', detail: e?.message, life: 3000 })
+        error.value = e?.response?.data?.error?.message || e?.message || 'Не удалось сохранить'
+    } finally {
+        saving.value = false
     }
 }
 </script>
 
 <template>
     <Dialog :visible="visible" @update:visible="(v) => emit('update:visible', v)"
-            modal header="Колонки доски" :style="{ width: '640px' }" dismissable-mask>
-        <div class="grid grid-cols-[200px_minmax(0,1fr)] gap-5 min-h-[320px]">
-            <div class="space-y-1">
-                <div v-for="c in columns" :key="c.id"
-                     class="rounded-lg px-3 py-2 text-sm cursor-pointer flex items-center gap-2 transition border"
-                     :class="current?.id === c.id ? 'border-ink-900 bg-ink-50' : 'border-transparent hover:bg-ink-50'"
-                     @click="pick(c)">
-                    <span class="size-2 rounded-full" :style="{ background: c.color || '#D63A1C' }"></span>
-                    <span class="truncate flex-1">{{ c.name }}</span>
-                    <span v-if="c.kind !== 'custom'" class="text-[10px] font-bold uppercase text-ink-400">{{ c.kind }}</span>
-                </div>
-                <button v-if="!creating" type="button"
-                        class="w-full text-left rounded-lg px-3 py-2 text-sm text-tomato-500 hover:bg-tomato-500/10 transition"
-                        @click="creating = true">
-                    + Новая колонка
-                </button>
-                <div v-else class="flex gap-1">
-                    <input v-model="newName" placeholder="Название"
-                           class="flex-1 rounded-lg border border-ink-200 px-3 py-1.5 text-sm focus:outline-none focus:border-ink-900"
-                           @keyup.enter="createNew" />
-                    <button type="button" class="rounded-lg px-2 bg-tomato-500 text-cream-50 text-sm" @click="createNew">OK</button>
+            modal :header="editingId != null ? 'Редактировать колонку' : 'Новая колонка'"
+            :style="{ width: '380px' }" dismissable-mask>
+        <form class="flex flex-col gap-4" @submit.prevent="onSubmit">
+            <div>
+                <label class="text-xs font-bold uppercase tracking-wider text-ink-400">Название</label>
+                <InputText v-model="form.name" fluid class="mt-1" autofocus />
+            </div>
+            <div>
+                <label class="text-xs font-bold uppercase tracking-wider text-ink-400">Цвет метки</label>
+                <div class="mt-2 flex flex-wrap gap-2">
+                    <button v-for="color in COLOR_PALETTE" :key="color"
+                            type="button"
+                            class="size-7 rounded-full border-2 transition cursor-pointer"
+                            :class="form.color === color ? 'border-ink-900' : 'border-transparent'"
+                            :style="{ background: color }"
+                            @click="form.color = color" />
                 </div>
             </div>
+            <label class="flex items-center gap-2 text-sm">
+                <input v-model="form.requireGoals" type="checkbox" class="size-4" />
+                Требовать выполнения всех целей для выхода из колонки
+            </label>
 
-            <div v-if="current" class="space-y-3">
-                <div>
-                    <label class="text-xs font-bold uppercase tracking-wider text-ink-400">Название</label>
-                    <input v-model="draft.name"
-                           class="mt-1 w-full rounded-xl border border-ink-200 px-4 py-2.5 focus:outline-none focus:border-ink-900" />
-                </div>
-                <div>
-                    <label class="text-xs font-bold uppercase tracking-wider text-ink-400">Цвет</label>
-                    <input v-model="draft.color" type="color" class="mt-1 w-16 h-10 rounded-xl border border-ink-200" />
-                </div>
-                <label class="flex items-center gap-2 text-sm">
-                    <input v-model="draft.requireGoals" type="checkbox" />
-                    Требовать выполнения всех целей для выхода
-                </label>
-
-                <div class="pt-3 border-t border-ink-100 flex items-center gap-2">
-                    <Button label="Сохранить" icon="pi pi-check" @click="saveCurrent" />
-                    <Button v-if="current.kind === 'custom'" severity="secondary" outlined icon="pi pi-arrow-left" @click="moveLeft" />
-                    <Button v-if="current.kind === 'custom'" severity="secondary" outlined icon="pi pi-arrow-right" @click="moveRight" />
-                    <Button v-if="current.kind === 'custom'" severity="danger" outlined icon="pi pi-trash" @click="removeCurrent" />
-                    <div v-if="current.kind !== 'custom'" class="text-xs text-ink-400 ml-auto">Системная колонка</div>
-                </div>
+            <div v-if="error" class="text-sm text-tomato-600 bg-tomato-50 rounded px-3 py-2">
+                {{ error }}
             </div>
-            <div v-else class="text-sm text-ink-400">Выберите колонку слева</div>
-        </div>
-        <template #footer>
-            <Button label="Закрыть" severity="secondary" outlined @click="emit('update:visible', false)" />
-        </template>
+
+            <div class="flex justify-end gap-2 pt-2">
+                <Button type="button" label="Отмена" severity="secondary" outlined
+                        @click="emit('update:visible', false)" />
+                <Button type="submit" :label="editingId != null ? 'Сохранить' : 'Создать'" :loading="saving" />
+            </div>
+        </form>
     </Dialog>
 </template>

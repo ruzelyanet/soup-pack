@@ -120,7 +120,7 @@ export const useCart = defineStore('cart', () => {
     function addSet(set: OrderSet, qty = 1) {
         const existing = items.value.find((i) => i.type === 'set' && i.refId === set.id)
         if (existing) existing.qty += qty
-        else items.value.push({ type: 'set', refId: set.id, qty, name: set.name, image: set.banner })
+        else items.value.push({ type: 'set', refId: set.id, qty, name: set.name })
         refetch()
     }
 
