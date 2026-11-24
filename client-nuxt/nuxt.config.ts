@@ -49,4 +49,9 @@ export default defineNuxtConfig({
             ],
         },
     },
+
+    routeRules: {
+        '/promotions': { redirect: '/discounts' },
+        '/promotions/**': { redirect: '/discounts' },
+    },
 })

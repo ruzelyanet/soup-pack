@@ -107,8 +107,8 @@ export const useCatalog = defineStore('catalog', () => {
         return plus + raw.replace(/\D/g, '')
     })
 
-    // авто-загрузка при первом использовании
-    fetchAll()
+    // В Nuxt авто-fetch при импорте выполнится на сервере и дважды на клиенте.
+    // Подгрузку инициирует plugins/catalog.client.ts или страница через useAsyncData.
 
     return { categories, products, sets, banners, homeSections, contact, phoneTel, loading, error, fetchAll, findBySlug }
 })

@@ -43,6 +43,7 @@ function defaults(): CheckoutForm {
 
 /** Прочитать форму из localStorage. Date десериализуем из ISO. */
 function readStorage(): CheckoutForm {
+    if (!import.meta.client) return defaults()
     try {
         const raw = localStorage.getItem(STORAGE_KEY)
         if (!raw) return defaults()
@@ -65,16 +66,17 @@ export const useCheckout = defineStore('checkout', () => {
         Object.assign(form, defaults())
     }
 
-    watch(
-        form,
-        (v) => {
-            try {
-                // Date сериализуется через toJSON как ISO — ок.
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(v))
-            } catch { /* storage disabled */ }
-        },
-        { deep: true },
-    )
+    if (import.meta.client) {
+        watch(
+            form,
+            (v) => {
+                try {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(v))
+                } catch { /* storage disabled */ }
+            },
+            { deep: true },
+        )
+    }
 
     return { form, reset }
 })

@@ -7,6 +7,7 @@ const STORAGE_CLIENT = 'souppack.client.v1'
 const STORAGE_ORDERS = 'souppack.orders.v1'
 
 function read<T>(key: string, fallback: T): T {
+    if (!import.meta.client) return fallback
     try {
         const raw = localStorage.getItem(key)
         return raw ? (JSON.parse(raw) as T) : fallback
@@ -161,8 +162,10 @@ export const useAuth = defineStore('auth', () => {
         }
     }
 
-    watch(client, (v) => localStorage.setItem(STORAGE_CLIENT, JSON.stringify(v)))
-    watch(myOrders, (v) => localStorage.setItem(STORAGE_ORDERS, JSON.stringify(v)), { deep: true })
+    if (import.meta.client) {
+        watch(client, (v) => localStorage.setItem(STORAGE_CLIENT, JSON.stringify(v)))
+        watch(myOrders, (v) => localStorage.setItem(STORAGE_ORDERS, JSON.stringify(v)), { deep: true })
+    }
 
     return {
         client, myOrders, loading, error,

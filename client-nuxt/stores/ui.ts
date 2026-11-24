@@ -5,6 +5,7 @@ type Theme = 'light' | 'dark'
 const THEME_KEY = 'souppack.theme.v1'
 
 function readTheme(): Theme {
+    if (!import.meta.client) return 'light'
     try {
         const v = localStorage.getItem(THEME_KEY)
         if (v === 'dark' || v === 'light') return v
@@ -13,6 +14,7 @@ function readTheme(): Theme {
 }
 
 function applyTheme(t: Theme) {
+    if (!import.meta.client) return
     document.documentElement.setAttribute('data-theme', t)
 }
 
@@ -27,7 +29,9 @@ export const useUi = defineStore('ui', () => {
 
     watch(theme, (v) => {
         applyTheme(v)
-        try { localStorage.setItem(THEME_KEY, v) } catch { /* ignore */ }
+        if (import.meta.client) {
+            try { localStorage.setItem(THEME_KEY, v) } catch { /* ignore */ }
+        }
     })
 
     return { theme, toggleTheme }

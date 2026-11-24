@@ -1,7 +1,11 @@
 import axios from 'axios'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:1437'
-const API_TOKEN = import.meta.env.VITE_API_TOKEN || ''
+// shortcut: читаем Strapi URL/token из VITE_* на клиенте и из NUXT_PUBLIC_* на SSR-сервере.
+// Переделать на `useRuntimeConfig()` + Nuxt plugin, когда станет узким местом.
+const env: any = (import.meta as any).env || {}
+const procEnv: any = typeof process !== 'undefined' ? (process.env || {}) : {}
+const API_URL = env.VITE_API_URL || procEnv.NUXT_PUBLIC_API_URL || 'http://localhost:1437'
+const API_TOKEN = env.VITE_API_TOKEN || procEnv.NUXT_PUBLIC_API_TOKEN || ''
 
 /** Корень Strapi без `/api` — для абсолютных ссылок на медиа. */
 export const SERVER_URL = API_URL.replace(/\/api\/?$/, '')
@@ -32,7 +36,7 @@ export const api = axios.create({
 api.interceptors.response.use(
     (res) => res,
     (err) => {
-        if (import.meta.env.DEV) {
+        if (env.DEV) {
             console.error('[API error]', err?.response?.data || err.message)
         }
         return Promise.reject(err)

@@ -44,6 +44,7 @@ export interface QuoteSnapshot {
 
 /** Миграция из старого формата (строки-в-наборе спред'ом) в новый. */
 function migrateLegacy(): CartItem[] | null {
+    if (!import.meta.client) return null
     try {
         const raw = localStorage.getItem(STORAGE_KEY_LEGACY)
         if (!raw) return null
@@ -67,11 +68,11 @@ function migrateLegacy(): CartItem[] | null {
 }
 
 function readStorage(): CartItem[] {
+    if (!import.meta.client) return []
     try {
         const raw = localStorage.getItem(STORAGE_KEY)
         if (raw) return JSON.parse(raw) as CartItem[]
     } catch { /* ignore */ }
-    // Пытаемся мигрировать старый v1.
     const migrated = migrateLegacy()
     if (migrated) {
         try { localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated)) } catch { /* ignore */ }
@@ -197,16 +198,17 @@ export const useCart = defineStore('cart', () => {
         }, 300)
     }
 
-    watch(
-        items,
-        (v) => {
-            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(v)) } catch { /* ignore */ }
-        },
-        { deep: true },
-    )
-
-    // Начальный расчёт — если есть сохранённые позиции.
-    refetch()
+    if (import.meta.client) {
+        watch(
+            items,
+            (v) => {
+                try { localStorage.setItem(STORAGE_KEY, JSON.stringify(v)) } catch { /* ignore */ }
+            },
+            { deep: true },
+        )
+        // Начальный расчёт на клиенте, если есть сохранённые позиции.
+        refetch()
+    }
 
     return {
         items, lines, count, subtotal, total, discountTotal, hints, quote, quoting,
