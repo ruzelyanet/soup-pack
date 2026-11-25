@@ -33,12 +33,41 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Plugin =>
     },
   },
   upload: {
-    config: {
-      security: {
-        allowedTypes: allowedMediaTypes,
-        deniedTypes,
+    // Если задан CLOUDFLARE_R2_ACCESS_KEY — используем R2 (S3-совместимо).
+    // Иначе — локальная папка /public/uploads (как по-умолчанию у Strapi).
+    ...(env('CLOUDFLARE_R2_ACCESS_KEY') ? {
+      config: {
+        provider: 'aws-s3',
+        providerOptions: {
+          s3Options: {
+            endpoint: env('CLOUDFLARE_R2_ENDPOINT'),
+            accessKeyId: env('CLOUDFLARE_R2_ACCESS_KEY'),
+            secretAccessKey: env('CLOUDFLARE_R2_SECRET_KEY'),
+            region: 'auto',
+            params: {
+              Bucket: env('CLOUDFLARE_R2_BUCKET'),
+            },
+          },
+          baseUrl: env('CLOUDFLARE_R2_PUBLIC_URL'),  // https://<id>.r2.cloudflarestorage.com/<bucket>  или кастомный домен
+        },
+        actionOptions: {
+          upload: {},
+          uploadStream: {},
+          delete: {},
+        },
+        security: {
+          allowedTypes: allowedMediaTypes,
+          deniedTypes,
+        },
       },
-    },
+    } : {
+      config: {
+        security: {
+          allowedTypes: allowedMediaTypes,
+          deniedTypes,
+        },
+      },
+    }),
   },
 });
 
