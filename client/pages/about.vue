@@ -136,8 +136,8 @@ const values = [
         <section class="px-4 pt-8">
             <NuxtLink to="/chef" class="block bg-sf rounded-[22px] overflow-hidden no-underline text-ink">
                 <div class="flex gap-4 items-start p-5">
-                    <img src="/chef/photo-09.jpeg" alt="Мирзахаким Газиев"
-                         class="shrink-0 size-20 rounded-full object-cover" />
+                    <img src="/chef/photo-main.png" alt="Мирзахаким Газиев"
+                         class="shrink-0 w-24 h-32 rounded-2xl object-cover object-top" />
                     <div class="flex-1 min-w-0">
                         <div class="text-[11px] font-extrabold uppercase tracking-wider text-acct">
                             Шеф-повар · технолог

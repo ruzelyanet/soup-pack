@@ -11,7 +11,7 @@ useSeoMeta({
     description: 'Шеф-повар SOUP PACK Мирзахаким Газиев. Династия Газиевых, школа ресторанной сети «Урюк», авторская проработка блюд.',
 })
 
-const portrait = '/chef/photo-09.jpeg'
+const portrait = '/chef/photo-main.png'
 const gallery = [
     '/chef/photo-08.jpeg',
     '/chef/photo-05.jpeg',

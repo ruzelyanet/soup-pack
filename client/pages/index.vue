@@ -316,6 +316,32 @@ function fmt(v: number) {
         </section>
     </template>
 
+    <!-- Chef -->
+    <section class="pt-6 px-4">
+        <NuxtLink to="/chef" class="block bg-sf rounded-[22px] overflow-hidden no-underline text-ink">
+            <div class="flex gap-4 items-start p-5">
+                <img src="/chef/photo-main.png" alt="Мирзахаким Газиев"
+                     class="shrink-0 w-24 h-32 rounded-2xl object-cover object-top" />
+                <div class="flex-1 min-w-0">
+                    <div class="text-[11px] font-extrabold uppercase tracking-wider text-acct">
+                        Шеф-повар · технолог
+                    </div>
+                    <div class="mt-1 font-display font-extrabold text-[20px] leading-tight">
+                        Мирзахаким Газиев
+                    </div>
+                    <p class="m-0 mt-2 text-[14px] text-mut leading-relaxed">
+                        Представитель кулинарной династии Газиевых. Школа ресторанной сети «Урюк»
+                        в Москве, авторская проработка блюд для меню ташкентских ресторанов.
+                    </p>
+                </div>
+            </div>
+            <div class="px-5 pb-5 flex items-center justify-between text-acct font-semibold text-[14px]">
+                <span>Больше о шеф-поваре</span>
+                <Icon name="chevron-right" :size="18" :stroke="2.4" />
+            </div>
+        </NuxtLink>
+    </section>
+
     <!-- Why puck -->
     <section class="pt-6 px-4 flex flex-col gap-3.5">
         <h2 class="m-0 font-display font-black text-[24px]">Почему soup-pack</h2>
