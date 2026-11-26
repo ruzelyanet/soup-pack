@@ -6,6 +6,7 @@ import { useCatalog } from '@/stores/catalog'
 import { useCart } from '@/stores/cart'
 import SoupPuck from '@/components/SoupPuck.vue'
 import { productImg, mediaUrl } from '@/services/api'
+import { compositionText as compositionOf, fmtSum, productPrice, productShareDescription, productShareImage } from '@/utils/seo'
 import Icon from '@/components/Icon.vue'
 import ProductCard from '@/components/ProductCard.vue'
 
@@ -25,21 +26,43 @@ await useAsyncData('catalog', async () => { await catalog.fetchAll(); return tru
 
 const product = computed(() => catalog.findBySlug(route.params.slug as string))
 
+/* SEO и превью ссылки: название + цена в заголовке, описание · состав · цена в описании, фото товара.
+ * title с названием и «доставка в Ташкенте» — чтобы страницу находили по запросам «Том ям», «Борщ» и т. п. */
+const shareTitle = computed(() => {
+    const p = product.value
+    if (!p) return undefined
+    const { price } = productPrice(p)
+    return price ? `${p.name} — ${fmtSum(price)}` : p.name
+})
 useSeoMeta({
-    title: () => product.value ? `${product.value.name} — SOUP PACK` : 'SOUP PACK',
-    description: () => product.value?.description || product.value?.composition?.toString() || '',
-    ogTitle: () => product.value?.name || 'SOUP PACK',
-    ogDescription: () => product.value?.description || undefined,
-    ogImage: () => (product.value && productImg(product.value)) || undefined,
+    title: () => product.value ? `${product.value.name} — заказать с доставкой в Ташкенте · SOUP PACK` : undefined,
+    description: () => {
+        const p = product.value
+        if (!p) return undefined
+        return `${p.name} от SOUP PACK с доставкой по Ташкенту. ${productShareDescription(p)}`.slice(0, 300)
+    },
+    ogTitle: () => shareTitle.value,
+    ogDescription: () => (product.value ? productShareDescription(product.value).slice(0, 300) : undefined),
+    ogImage: () => (product.value && productShareImage(product.value)) || undefined,
     ogImageAlt: () => product.value?.name || undefined,
-    ogType: 'website',
+    ogType: 'product' as any,
+    twitterTitle: () => shareTitle.value,
+    twitterDescription: () => (product.value ? productShareDescription(product.value).slice(0, 200) : undefined),
+})
+useHead({
+    meta: [
+        { property: 'product:price:amount', content: () => (product.value ? String(productPrice(product.value).price) : undefined) },
+        { property: 'product:price:currency', content: () => (product.value ? 'UZS' : undefined) },
+    ],
 })
 
 useSchemaOrg([
     defineProduct({
         name: () => product.value?.name || '',
-        description: () => product.value?.description || '',
+        description: () => [product.value?.description, product.value && compositionOf(product.value) ? `Состав: ${compositionOf(product.value)}` : '']
+            .filter(Boolean).join('. '),
         image: () => (product.value ? productImg(product.value) : ''),
+        brand: { '@type': 'Brand', name: 'SOUP PACK' } as any,
         offers: () => {
             const p = product.value
             if (!p) return []

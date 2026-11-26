@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { SITE_DESCRIPTION, SITE_TITLE } from '@/utils/seo'
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCatalog } from '@/stores/catalog'
@@ -47,12 +48,10 @@ if (import.meta.client) {
 
 await useAsyncData('catalog', async () => { await catalog.fetchAll(); return true })
 
+// Превью ссылки (логотип, заголовок, описание) — общие значения из app.vue (utils/seo.ts).
 useSeoMeta({
-    title: 'SOUP PACK — готовые супы с доставкой в Ташкенте · Том ям, борщ, лагман',
-    description: 'Том ям, борщ, лагман, солянка, шурпа, харчо в формате порции 350 г. Натуральные ингредиенты, шоковая заморозка −40 °C, 5 минут на разогрев.',
-    ogTitle: 'SOUP PACK — готовые супы с доставкой в Ташкенте',
-    ogDescription: 'Готовые супы и пасты, шоковая заморозка, формат «шайбы» 350 г.',
-    ogType: 'website',
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
 })
 
 const sets = computed(() => catalog.sets)

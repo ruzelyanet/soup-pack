@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { OG_CHEF, seoSiteUrl } from '@/utils/seo'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import Icon from '@/components/Icon.vue'
@@ -9,6 +10,12 @@ const goBack = useGoBack()
 useSeoMeta({
     title: 'Шеф-повар — Мирзахаким Газиев · SOUP PACK',
     description: 'Шеф-повар SOUP PACK Мирзахаким Газиев. Династия Газиевых, школа ресторанной сети «Урюк», авторская проработка блюд.',
+    // Превью ссылки: фото шефа, имя, короткое описание.
+    ogTitle: 'Мирзахаким Газиев — шеф-повар SOUP PACK',
+    ogDescription: 'Династия Газиевых и школа ресторанной сети «Урюк». Каждое блюдо SOUP PACK — по рецепту и под контролем шефа.',
+    ogImage: seoSiteUrl() + OG_CHEF,
+    ogImageAlt: 'Шеф-повар Мирзахаким Газиев',
+    ogType: 'profile' as any,
 })
 
 const portrait = '/chef/photo-main.png'
