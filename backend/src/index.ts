@@ -179,8 +179,29 @@ async function upsertByField<T extends { id: number; documentId: string }>(
     return created as T
 }
 
+/** Демо-каталог: создаётся ОДИН раз и только на пустой базе (первый запуск нового окружения).
+ *  Раньше сид шёл при каждом старте и «по ключу» возвращал удалённые/переименованные
+ *  баннеры, секции, категории и блюда после каждого деплоя. Флаг — в strapi.store. */
 async function seedCatalog(strapi: Core.Strapi) {
-    strapi.log.info('[seed] ensuring catalog is populated (idempotent)…')
+    const store = strapi.store({ type: 'core', name: 'souppack' })
+    if (await store.get({ key: 'catalog-seeded-v1' })) return
+
+    const [productsCount, categoriesCount] = await Promise.all([
+        strapi.db.query('api::product.product').count({}),
+        strapi.db.query('api::category.category').count({}),
+    ])
+    if (productsCount > 0 || categoriesCount > 0) {
+        await store.set({ key: 'catalog-seeded-v1', value: { at: new Date().toISOString(), skipped: 'existing data' } })
+        strapi.log.info('[seed] каталог уже заполнен — демо-данные не создаём (и больше не проверяем)')
+        return
+    }
+
+    strapi.log.info('[seed] пустая база — создаём демо-каталог…')
+    await seedCatalogData(strapi)
+    await store.set({ key: 'catalog-seeded-v1', value: { at: new Date().toISOString(), skipped: false } })
+}
+
+async function seedCatalogData(strapi: Core.Strapi) {
 
     // Categories
     const catsData = [
