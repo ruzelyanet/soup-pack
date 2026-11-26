@@ -10,6 +10,7 @@
     "attributes": {
         "name":              { "type": "string", "required": true },
         "publicLabel":       { "type": "string" },
+        "description":       { "type": "text" },
         "status":            { "type": "enumeration", "enum": ["draft", "active", "paused", "archived"], "default": "draft", "required": true },
         "level":             { "type": "enumeration", "enum": ["line", "set", "order"], "required": true },
         "benefitType":       { "type": "enumeration", "enum": ["percent", "fixed_amount", "fixed_price"], "required": true },

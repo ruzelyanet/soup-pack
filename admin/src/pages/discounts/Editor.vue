@@ -30,6 +30,7 @@ const dirty = ref(false)
 type Form = {
     name: string
     publicLabel: string
+    description: string
     level: DiscountLevel
     benefitType: BenefitType
     benefitValue: number
@@ -45,6 +46,7 @@ type Form = {
 const form = reactive<Form>({
     name: '',
     publicLabel: '',
+    description: '',
     level: 'line',
     benefitType: 'percent',
     benefitValue: 10,
@@ -145,6 +147,7 @@ async function loadExisting(id: number) {
         existingApplications.value = Number(d._stats?.applications || 0)
         form.name = d.name
         form.publicLabel = d.publicLabel || ''
+        form.description = (d as any).description || ''
         form.level = d.level
         form.benefitType = d.benefitType
         form.benefitValue = d.benefitValue
@@ -183,6 +186,7 @@ async function loadCopy(id: number) {
     const d = res.data?.data as any
     form.name = (d.name || '') + ' (копия)'
     form.publicLabel = d.publicLabel || ''
+    form.description = (d as any).description || ''
     form.level = d.level
     form.benefitType = d.benefitType
     form.benefitValue = d.benefitValue
@@ -305,6 +309,7 @@ function buildPayload() {
     return {
         name: form.name.trim(),
         publicLabel: form.publicLabel.trim() || null,
+        description: form.description.trim() || null,
         level: form.level,
         benefitType: form.benefitType,
         benefitValue: Number(form.benefitValue),
@@ -563,6 +568,12 @@ function toggleWeekdayPreset(kind: 'weekdays' | 'weekends') {
                     <div class="text-xs text-ink-400 mt-1">
                         {{ form.publicLabel.length }}/40 · если пусто — клиент увидит название
                     </div>
+                </div>
+                <div>
+                    <label class="text-sm font-semibold">Описание для клиента</label>
+                    <textarea v-model="form.description" rows="3"
+                              placeholder="Подробности акции — покажем на странице скидки у клиента"
+                              class="mt-1 w-full rounded-xl border border-ink-200 px-4 py-2.5 focus:outline-none focus:border-ink-900 text-sm" />
                 </div>
             </section>
 
