@@ -29,8 +29,9 @@ useSeoMeta({
     title: () => product.value ? `${product.value.name} — SOUP PACK` : 'SOUP PACK',
     description: () => product.value?.description || product.value?.composition?.toString() || '',
     ogTitle: () => product.value?.name || 'SOUP PACK',
-    ogDescription: () => product.value?.description || '',
-    ogImage: () => product.value ? productImg(product.value) : '',
+    ogDescription: () => product.value?.description || undefined,
+    ogImage: () => (product.value && productImg(product.value)) || undefined,
+    ogImageAlt: () => product.value?.name || undefined,
     ogType: 'website',
 })
 
