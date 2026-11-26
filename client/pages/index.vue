@@ -149,6 +149,13 @@ function fmt(v: number) {
         </div>
     </header>
 
+    <!-- Главный заголовок страницы (h1) — для SEO; видим пользователю, в стиле заголовков сайта. -->
+    <section class="px-4 pt-1 pb-1">
+        <h1 class="m-0 font-display font-black text-[26px] leading-[1.1] tracking-tight text-ink">
+            Вкусная ресторанная еда <span class="text-acc">от&nbsp;шеф-повара</span>
+        </h1>
+    </section>
+
     <!-- Call-to-order: главный способ сделать заказ по телефону (номер из админки) -->
     <section v-if="catalog.contact.phone" aria-label="Заказ по телефону" class="px-4 pt-2">
         <a :href="`tel:${catalog.phoneTel}`"
