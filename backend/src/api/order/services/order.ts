@@ -186,7 +186,8 @@ export default factories.createCoreService('api::order.order', ({ strapi }) => (
 
         const created = await strapi.documents('api::order.order').create({
             data: data as any,
-            populate: ['items', 'client', 'request', 'employee'] as any,
+            // items.product нужен клиенту: из ответа он пишет локальную историю заказов (повтор заказа).
+            populate: { items: { populate: ['product'] }, client: true, request: true, employee: true } as any,
         })
         const orderId = Number((created as any).id)
 

@@ -3,7 +3,7 @@ definePageMeta({ hideBottom: true, ssr: false })
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCart } from '@/stores/cart'
-import { useAuth } from '@/stores/auth'
+import { useAuth, mapOrder } from '@/stores/auth'
 import { useCatalog } from '@/stores/catalog'
 import { useCheckout, type PayMethod } from '@/stores/checkout'
 import { useToast } from 'primevue/usetoast'
@@ -419,12 +419,9 @@ async function submit() {
         const serverOrder = data?.data
 
         // Для локальной истории заказов — приводим серверные строки к формату `OrderLine`.
-        const historyItems = (serverOrder?.items || []).map((l: any) => ({
-            productId: l.product?.id ?? l.product,
-            name: l.name,
-            price: Number(l.unitPrice ?? l.price ?? 0),
-            qty: Number(l.qty || 1),
-        }))
+        // Тот же маппинг, что и для /orders/mine: со скидками по строкам и скидкой на чек.
+        const mapped = serverOrder ? mapOrder(serverOrder) : null
+        const historyItems = mapped?.items ?? []
 
         const order: Order = {
             code: serverOrder?.code || 'SP-' + Date.now().toString().slice(-6),
@@ -433,6 +430,7 @@ async function submit() {
             comment: form.comment,
             paymentMethod: (form.pay === 'cash' ? 'cash' : 'card') as 'cash' | 'card',
             total: Number(serverOrder?.total ?? grandTotal.value),
+            discountTotal: mapped?.discountTotal,
             status: 'new',
             createdAt: serverOrder?.createdAt || new Date().toISOString(),
         }

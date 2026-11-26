@@ -1,6 +1,6 @@
 <script setup lang="ts">
 definePageMeta({ ssr: false })
-import { computed, onBeforeUnmount, onMounted, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '@/stores/auth'
 import { useCart } from '@/stores/cart'
@@ -150,14 +150,23 @@ function fmt(v: number) {
     return new Intl.NumberFormat('ru-RU').format(v) + ' сум'
 }
 
-function repeat() {
-    if (!order.value) return
-    cart.clear()
-    for (const i of order.value.items) {
-        const p = catalog.products.find((pp) => pp.id === i.productId)
-        if (p) cart.addProduct(p, i.qty)
+const repeatOrder = useRepeatOrder()
+const repeating = ref(false)
+const repeatError = ref('')
+async function repeat() {
+    if (!order.value || repeating.value) return
+    repeating.value = true
+    repeatError.value = ''
+    try {
+        const { added } = await repeatOrder(order.value)
+        if (!added) {
+            repeatError.value = 'Этих блюд больше нет в меню — соберите заказ заново.'
+            return
+        }
+        router.push('/cart')
+    } finally {
+        repeating.value = false
     }
-    router.push('/cart')
 }
 </script>
 
@@ -308,9 +317,10 @@ function repeat() {
         <div class="flex-1 min-h-6"></div>
 
         <div class="sticky bottom-0 px-4 pt-3 pb-4 bg-bg flex flex-col gap-2">
-            <button type="button" @click="repeat"
-                    class="h-[56px] rounded-[18px] bg-acc text-white font-extrabold text-[16px]">
-                Повторить заказ
+            <p v-if="repeatError" class="m-0 text-[13px] font-bold text-acct text-center">{{ repeatError }}</p>
+            <button type="button" @click="repeat" :disabled="repeating"
+                    class="h-[56px] rounded-[18px] bg-acc text-white font-extrabold text-[16px] disabled:opacity-70">
+                {{ repeating ? 'Собираем корзину…' : 'Повторить заказ' }}
             </button>
             <NuxtLink to="/account"
                         class="h-[48px] rounded-[16px] bg-sf text-ink font-extrabold text-[15px] flex items-center justify-center">

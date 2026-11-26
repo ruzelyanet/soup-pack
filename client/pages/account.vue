@@ -90,15 +90,9 @@ function shortTime(iso?: string) {
 }
 
 /* ────── Повторить заказ ────── */
-function repeat(o: Order) {
-    let added = 0
-    for (const line of o.items) {
-        const p = catalog.products.find((pp) => pp.id === line.productId)
-        if (p) {
-            cart.addProduct(p, line.qty)
-            added++
-        }
-    }
+const repeatOrder = useRepeatOrder()
+async function repeat(o: Order) {
+    const { added } = await repeatOrder(o)
     if (added === 0) {
         toast.add({ severity: 'warn', summary: 'Товары больше не доступны', life: 2500 })
         return

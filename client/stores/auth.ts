@@ -23,7 +23,7 @@ function normalizePhone(input: string): string {
 }
 
 /** Маппер Strapi-заказа в локальный Order. */
-function mapOrder(o: any): Order {
+export function mapOrder(o: any): Order {
     return {
         code: o.code,
         client: {
@@ -34,10 +34,11 @@ function mapOrder(o: any): Order {
             lng: o.client?.lng,
         },
         items: (o.items || []).map((i: any) => ({
-            productId: i.product?.id ?? 0,
+            // Сервер отдаёт `product` то объектом, то просто id — поддерживаем оба варианта.
+            productId: Number(i.product?.id ?? (typeof i.product === 'number' ? i.product : null) ?? i.productId ?? 0),
             name: i.name,
-            price: Number(i.price),
-            qty: i.qty,
+            price: Number(i.price ?? i.unitPrice ?? 0),
+            qty: Number(i.qty || 1),
             basePrice:           i.basePrice           != null ? Number(i.basePrice)           : undefined,
             unitPrice:           i.unitPrice           != null ? Number(i.unitPrice)           : undefined,
             orderDiscountAmount: i.orderDiscountAmount != null ? Number(i.orderDiscountAmount) : undefined,
