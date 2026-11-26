@@ -27,7 +27,9 @@ export default defineNuxtConfig({
             // клиент видит публичный URL
             apiUrl: 'http://localhost:1437',
             apiToken: '',
-            siteUrl: 'http://localhost:3000',
+            // Адрес сайта для canonical и og:url (превью ссылок в Telegram/соцсетях).
+            // По умолчанию — прод; переопределяется NUXT_PUBLIC_SITE_URL (для локалки — http://localhost:3000).
+            siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'https://soup-pack.uz',
         },
     },
 
