@@ -11,6 +11,8 @@ export default {
         { method: 'PUT',  path: '/staff/orders/:id/edit',  handler: 'api::order.order.edit',     config: staff },
         { method: 'POST', path: '/staff/orders/:id/cancel',handler: 'api::order.order.cancel',   config: staff },
         { method: 'GET',  path: '/staff/dashboard',      handler: 'api::order.order.dashboard',    config: staff },
+        { method: 'GET',  path: '/staff/orders-geo',     handler: 'api::order.order.geo',          config: staff },
+        { method: 'POST', path: '/staff/orders-geo/resolve', handler: 'api::order.order.resolveDistricts', config: staff },
         { method: 'POST', path: '/staff/upload',         handler: 'api::order.order.staffUpload',  config: staff },
     ],
 }

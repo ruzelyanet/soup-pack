@@ -22,6 +22,10 @@ export interface Banner     extends Base { title: string; subtitle?: string; lin
 export interface HomeSection extends Base {
     title: string; slug?: string; icon?: string | null
     sort?: number; visible: boolean; isHits: boolean; isSets: boolean
+    /** Секция показывает все блюда категории (а не ручную подборку). */
+    fromCategory?: boolean
+    /** Сколько блюд показывать в авто-режимах (категория / хиты). null — все. */
+    limit?: number | null
     category?: Category | null
     products?: Product[] | null
 }
@@ -214,7 +218,22 @@ export interface DashboardData {
     ordersCount: number
     canceledCount: number
     avgCheck: number
+    /** Новые клиенты за период. */
+    newClientsCount: number
+    /** Период «за всё время». */
+    allTime?: boolean
+    /** Те же показатели за предыдущий период такой же длины (null для «всё время»). */
+    previous: DashboardPeriodTotals | null
+    /** Топ-5 блюд за период (без отменённых заказов). */
+    topProducts: Array<{ productId: number | null; name: string; sold: number; revenue: number }>
+    /** Состояние «сейчас», от периода не зависит. */
     clientsCount: number
+    productsCount: number
+    activeOrdersCount: number
+}
+export interface DashboardPeriodTotals {
+    ordersCount: number; salesTotal: number; avgCheck: number; canceledCount: number
+    paymentsSum: number; refundsSum: number; receiptsTotal: number; newClientsCount: number
 }
 
 // Админка ходит через staff-прокси — там is-staff policy спуфит ctx.state.auth

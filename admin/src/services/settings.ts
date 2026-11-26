@@ -18,7 +18,7 @@ export const Settings = {
         const res = await api.get('/staff/request-settings/sla')
         return res.data?.data as SlaPublic
     },
-    async dashboard(params: { from?: string; to?: string } = {}): Promise<DashboardData> {
+    async dashboard(params: { from?: string; to?: string; all?: '1' } = {}): Promise<DashboardData> {
         const res = await api.get('/staff/dashboard' + qs(params))
         return res.data?.data as DashboardData
     },

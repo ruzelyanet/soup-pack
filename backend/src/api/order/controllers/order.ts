@@ -1,6 +1,7 @@
 import { factories } from '@strapi/strapi'
 import { errors } from '@strapi/utils'
 import type { BuildOrderInput } from '../services/order'
+import { GeocoderError, geocoderConfigured, resolveOrderDistrict } from '../../../utils/district'
 
 const { ApplicationError } = errors
 
@@ -17,6 +18,24 @@ const EDITABLE_FIELDS = [
 function normalizePhone(input: string): string {
     const digits = (input || '').replace(/\D/g, '').slice(-9)
     return '+998' + digits
+}
+
+/** Период статистики из query: ISO-время (админка шлёт границы суток в своём поясе)
+ *  или YYYY-MM-DD (= сутки по Ташкенту). `all=1` — всё время. Без параметров — последние 7 дней. */
+function parsePeriod(query: any): { from: Date; to: Date; allTime: boolean } {
+    const q = (query || {}) as { from?: string; to?: string; all?: string }
+    const TZ = '+05:00' // Asia/Tashkent, без перехода на летнее время
+    const parse = (v: string | undefined, endOfDay: boolean): Date | null => {
+        if (!v) return null
+        const d = /^\d{4}-\d{2}-\d{2}$/.test(v)
+            ? new Date(`${v}T${endOfDay ? '23:59:59.999' : '00:00:00.000'}${TZ}`)
+            : new Date(v)
+        return Number.isNaN(d.getTime()) ? null : d
+    }
+    const allTime = q.all === '1' || q.all === 'true'
+    const to = (!allTime && parse(q.to, true)) || new Date()
+    const from = allTime ? new Date(0) : (parse(q.from, false) || new Date(to.getTime() - 7 * 86400_000))
+    return { from, to, allTime }
 }
 
 export default factories.createCoreController('api::order.order', ({ strapi }) => ({
@@ -50,6 +69,17 @@ export default factories.createCoreController('api::order.order', ({ strapi }) =
                 return ctx.badRequest('Проверьте форму заказа', { fieldErrors })
             }
 
+            // Способ доставки, выбранный клиентом (коллекция delivery-method, напр. `yandex`).
+            // Принимаем только существующий и активный — иначе заказ без кода, как раньше.
+            let deliveryMethodCode: string | null = null
+            const requestedCode = typeof body.deliveryMethodCode === 'string' ? body.deliveryMethodCode.trim() : ''
+            if (requestedCode) {
+                const method = await strapi.db.query('api::delivery-method.delivery-method').findOne({
+                    where: { code: requestedCode },
+                })
+                if (method && method.active !== false) deliveryMethodCode = requestedCode
+            }
+
             const input: BuildOrderInput = {
                 client: {
                     fullName: body.client.fullName,
@@ -60,7 +90,9 @@ export default factories.createCoreController('api::order.order', ({ strapi }) =
                 },
                 items: body.items,
                 paymentMethod: body.paymentMethod,
-                deliveryMethod: 'courier_now',
+                deliveryMethod: body.deliveryMethod === 'preorder' ? 'preorder' : 'courier_now',
+                deliveryMethodCode,
+                deliverySlotAt: body.deliverySlotAt ?? null,
                 comment: body.comment,
                 address: body.address ?? body.client.address,
                 lat: body.lat ?? body.client.lat,
@@ -120,14 +152,81 @@ export default factories.createCoreController('api::order.order', ({ strapi }) =
     },
 
     /** Сводные метрики для дашборда. */
+    /** Заказы за период для карты / статистики по районам: только поля для геоаналитики. */
+    async geo(ctx) {
+        const employee = ctx.state.employee
+        if (!employee || !['manager', 'duty'].includes(employee.role)) return ctx.forbidden('FORBIDDEN_ROLE')
+        const { from, to, allTime } = parsePeriod(ctx.query)
+        if (from > to) return ctx.badRequest('from must be before to')
+        const withCanceled = ctx.query?.canceled === '1'
+        const where: any = { createdAt: { $gte: from, $lte: to } }
+        if (!withCanceled) where.status = { $ne: 'canceled' }
+        const rows = await strapi.db.query('api::order.order').findMany({
+            where,
+            select: ['id', 'documentId', 'code', 'status', 'total', 'lat', 'lng', 'address', 'district', 'createdAt', 'deliveryMethodCode'],
+            orderBy: { createdAt: 'desc' },
+            limit: 20000,
+        })
+        ctx.body = {
+            data: rows.map((o: any) => ({
+                id: o.id,
+                documentId: o.documentId,
+                code: o.code,
+                status: o.status,
+                total: Number(o.total || 0),
+                lat: o.lat != null ? Number(o.lat) : null,
+                lng: o.lng != null ? Number(o.lng) : null,
+                address: o.address || null,
+                // null — ещё не определяли; '' — определяли, района нет.
+                district: o.district ?? null,
+                createdAt: o.createdAt,
+                deliveryMethodCode: o.deliveryMethodCode || null,
+            })),
+            meta: {
+                from: from.toISOString(), to: to.toISOString(), allTime, truncated: rows.length >= 20000,
+                unresolved: rows.filter((o: any) => o.district == null && (o.lat != null || o.address)).length,
+                geocoder: geocoderConfigured(),
+            },
+        }
+    },
+
+    /** Дозаполнить район у заказов, где он ещё не определён (старые заказы). Порция за вызов — админка вызывает,
+     *  пока `left > 0`. Между запросами к геокодеру пауза, чтобы не упереться в лимиты Яндекса. */
+    async resolveDistricts(ctx) {
+        const employee = ctx.state.employee
+        if (!employee || !['manager', 'duty'].includes(employee.role)) return ctx.forbidden('FORBIDDEN_ROLE')
+        const batch = Math.min(50, Math.max(1, Number(ctx.request.body?.batch) || 25))
+        const where: any = { district: { $null: true }, $or: [{ lat: { $notNull: true } }, { address: { $notNull: true } }] }
+        const rows = await strapi.db.query('api::order.order').findMany({
+            where, select: ['id', 'address', 'lat', 'lng'], orderBy: { createdAt: 'desc' }, limit: batch,
+        })
+        let resolved = 0
+        let error: string | null = null
+        for (const o of rows as any[]) {
+            try {
+                const district = await resolveOrderDistrict(o)
+                await strapi.db.query('api::order.order').update({ where: { id: o.id }, data: { district } })
+                if (district) resolved++
+            } catch (e: any) {
+                error = e instanceof GeocoderError ? e.message : (e?.message || String(e))
+                break // ключ / сеть — дальше нет смысла
+            }
+            await new Promise((r) => setTimeout(r, 120))
+        }
+        const left = await strapi.db.query('api::order.order').count({ where })
+        ctx.body = { data: { processed: rows.length, resolved, left, error, geocoder: geocoderConfigured() } }
+    },
+
     async dashboard(ctx) {
         const employee = ctx.state.employee
         if (!employee || !['manager', 'duty'].includes(employee.role)) return ctx.forbidden('FORBIDDEN_ROLE')
 
-        const q = (ctx.query || {}) as { from?: string; to?: string }
-        const to = q.to ? new Date(q.to + 'T23:59:59') : new Date()
-        const from = q.from ? new Date(q.from + 'T00:00:00') : new Date(to.getTime() - 7 * 86400_000)
-
+        const { from, to, allTime } = parsePeriod(ctx.query)
+        if (from > to) return ctx.badRequest('from must be before to')
+        // Предыдущий период той же длины — для сравнения («+12% к прошлому периоду»).
+        const span = to.getTime() - from.getTime()
+        const prevTo = new Date(from.getTime() - 1)
+        const prevFrom = new Date(from.getTime() - span - 1)
         // --- Неназначенные заявки (всего, не только за период) ---
         const unassignedRequestsCount = await strapi.db.query('api::request.request').count({
             where: { acceptedById: { $null: true }, archived: false, outcome: 'open' },
@@ -173,55 +272,89 @@ export default factories.createCoreController('api::order.order', ({ strapi }) =
             rate: b.requests ? Math.round((b.converted / b.requests) * 100) : 0,
         }))
 
-        // --- Продажи (по заказам) и Поступления (по транзакциям) за период ---
-        const orders = await strapi.db.query('api::order.order').findMany({
-            where: {
-                createdAt: { $gte: from, $lte: to },
-                status: { $ne: 'canceled' },
-            } as any,
-            select: ['total'],
-            limit: 10000,
-        })
-        const ordersCount = orders.length
-        const salesTotal = orders.reduce((s: number, o: any) => s + Number(o.total || 0), 0)
-        const avgCheck = ordersCount > 0 ? Math.round(salesTotal / ordersCount) : 0
-        const canceledCount = await strapi.db.query('api::order.order').count({
-            where: { createdAt: { $gte: from, $lte: to }, status: 'canceled' } as any,
-        })
-        const clientsCount = await strapi.db.query('api::client.client').count({})
-
-        const txns = await strapi.db.query('api::transaction.transaction').findMany({
-            where: {
-                status: 'completed',
-                paidAt: { $gte: from, $lte: to },
-            } as any,
-            select: ['kind', 'amount'],
-            limit: 10000,
-        })
-        let paymentsSum = 0
-        let refundsSum = 0
-        for (const t of txns) {
-            const a = Number(t.amount || 0)
-            if (t.kind === 'payment') paymentsSum += a
-            else if (t.kind === 'refund') refundsSum += a
+        // --- Продажи, отмены, поступления: за период и за предыдущий такой же ---
+        const salesFor = async (a: Date, b: Date) => {
+            const rows = await strapi.db.query('api::order.order').findMany({
+                where: { createdAt: { $gte: a, $lte: b }, status: { $ne: 'canceled' } } as any,
+                select: ['total'],
+                limit: 100000,
+            })
+            const ordersCount = rows.length
+            const salesTotal = rows.reduce((s: number, o: any) => s + Number(o.total || 0), 0)
+            const canceledCount = await strapi.db.query('api::order.order').count({
+                where: { createdAt: { $gte: a, $lte: b }, status: 'canceled' } as any,
+            })
+            const txns = await strapi.db.query('api::transaction.transaction').findMany({
+                where: { status: 'completed', paidAt: { $gte: a, $lte: b } } as any,
+                select: ['kind', 'amount'],
+                limit: 100000,
+            })
+            let paymentsSum = 0
+            let refundsSum = 0
+            for (const t of txns) {
+                const amt = Number(t.amount || 0)
+                if (t.kind === 'payment') paymentsSum += amt
+                else if (t.kind === 'refund') refundsSum += amt
+            }
+            const newClientsCount = await strapi.db.query('api::client.client').count({
+                where: { createdAt: { $gte: a, $lte: b } } as any,
+            })
+            return {
+                ordersCount,
+                salesTotal,
+                avgCheck: ordersCount > 0 ? Math.round(salesTotal / ordersCount) : 0,
+                canceledCount,
+                paymentsSum,
+                refundsSum,
+                receiptsTotal: paymentsSum - refundsSum,
+                newClientsCount,
+            }
         }
-        const receiptsTotal = paymentsSum - refundsSum
+        const current = await salesFor(from, to)
+        const previous = allTime ? null : await salesFor(prevFrom, prevTo)
+
+        // --- Хиты продаж за период (по строкам заказов, без отменённых) ---
+        const periodOrders = await strapi.db.query('api::order.order').findMany({
+            where: { createdAt: { $gte: from, $lte: to }, status: { $ne: 'canceled' } } as any,
+            select: ['id'],
+            populate: { items: { populate: { product: { select: ['id', 'name', 'slug'] } } } } as any,
+            limit: 100000,
+        })
+        const topAcc = new Map<string, { productId: number | null; name: string; sold: number; revenue: number }>()
+        for (const o of periodOrders as any[]) {
+            for (const it of o.items || []) {
+                const pid = it.product?.id ?? null
+                const key = pid ? `p${pid}` : `n${it.name}`
+                const row = topAcc.get(key) ?? { productId: pid, name: it.product?.name || it.name, sold: 0, revenue: 0 }
+                const qty = Number(it.qty || 0)
+                row.sold += qty
+                row.revenue += it.lineTotal != null ? Number(it.lineTotal) : Number(it.price || 0) * qty
+                topAcc.set(key, row)
+            }
+        }
+        const topProducts = [...topAcc.values()].sort((a, b) => b.sold - a.sold || b.revenue - a.revenue).slice(0, 5)
+
+        // --- Состояние «сейчас» (не зависит от периода) ---
+        const clientsCount = await strapi.db.query('api::client.client').count({})
+        const productsCount = await strapi.db.query('api::product.product').count({})
+        const activeOrdersCount = await strapi.db.query('api::order.order').count({
+            where: { status: { $in: ['new', 'accepted', 'in_progress'] } } as any,
+        })
 
         ctx.body = {
             data: {
                 from: from.toISOString(),
                 to: to.toISOString(),
+                allTime,
                 unassignedRequestsCount,
                 avgTimeToAcceptMinutes,
                 conversionByEmployee,
-                salesTotal,
-                receiptsTotal,
-                paymentsSum,
-                refundsSum,
-                ordersCount,
-                canceledCount,
-                avgCheck,
+                ...current,
+                previous,
+                topProducts,
                 clientsCount,
+                productsCount,
+                activeOrdersCount,
             },
         }
     },

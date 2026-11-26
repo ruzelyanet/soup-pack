@@ -1,27 +1,8 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, ref, watch } from 'vue'
 
-/** Яндекс.Карты 2.1 — грузим скрипт один раз по первой необходимости. */
-const YANDEX_API_KEY = import.meta.env.VITE_YANDEX_MAPS_KEY as string | undefined
-const YANDEX_GEOCODER_KEY = import.meta.env.VITE_YANDEX_GEOCODER_KEY as string | undefined
-
-let ymapsPromise: Promise<any> | null = null
-function loadYmaps(): Promise<any> {
-    if ((window as any).ymaps?.Map) {
-        return (window as any).ymaps.ready().then(() => (window as any).ymaps)
-    }
-    if (ymapsPromise) return ymapsPromise
-    ymapsPromise = new Promise((resolve, reject) => {
-        const script = document.createElement('script')
-        const key = YANDEX_API_KEY ? `apikey=${encodeURIComponent(YANDEX_API_KEY)}&` : ''
-        script.src = `https://api-maps.yandex.ru/2.1/?${key}lang=ru_RU`
-        script.async = true
-        script.onload = () => (window as any).ymaps.ready(() => resolve((window as any).ymaps))
-        script.onerror = () => reject(new Error('yandex maps load failed'))
-        document.head.appendChild(script)
-    })
-    return ymapsPromise
-}
+/** Яндекс.Карты 2.1 — общий загрузчик (скрипт грузится один раз на всю админку). */
+import { loadYmaps, YANDEX_GEOCODER_KEY } from '@/services/ymaps'
 
 const props = defineProps<{
     address: string
