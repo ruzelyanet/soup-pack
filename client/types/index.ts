@@ -24,6 +24,10 @@ export interface HomeSection {
     visible: boolean
     isHits: boolean
     isSets: boolean
+    /** Показывать все блюда категории вместо ручной подборки. */
+    fromCategory?: boolean
+    /** Лимит блюд для авто-режимов (категория / хиты). */
+    limit?: number | null
     category?: Category | null
     products?: Product[] | null
 }

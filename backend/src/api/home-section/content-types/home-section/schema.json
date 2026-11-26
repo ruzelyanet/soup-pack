@@ -11,6 +11,8 @@
     "visible":  { "type": "boolean", "default": true },
     "isHits":   { "type": "boolean", "default": false },
     "isSets":   { "type": "boolean", "default": false },
+    "fromCategory": { "type": "boolean", "default": false },
+    "limit":    { "type": "integer", "min": 1 },
     "category": { "type": "relation", "relation": "manyToOne", "target": "api::category.category" },
     "products": { "type": "relation", "relation": "manyToMany", "target": "api::product.product" }
   }

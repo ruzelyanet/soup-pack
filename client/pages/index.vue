@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCatalog } from '@/stores/catalog'
 import { useAuth } from '@/stores/auth'
@@ -15,6 +15,35 @@ const catalog = useCatalog()
 const auth = useAuth()
 const ui = useUi()
 const router = useRouter()
+
+/** Шапка прячется при скролле вниз, показывается при скролле вверх — как нижнее меню. */
+const headerHidden = ref(false)
+if (import.meta.client) {
+    let lastY = 0
+    const THRESHOLD = 6
+    const TOP_GUARD = 12
+    const getY = () => {
+        const el = document.scrollingElement || document.documentElement
+        return el.scrollTop || window.scrollY || 0
+    }
+    const onScroll = () => {
+        const y = getY()
+        if (y < TOP_GUARD) { headerHidden.value = false; lastY = y; return }
+        const dy = y - lastY
+        if (Math.abs(dy) < THRESHOLD) return
+        headerHidden.value = dy > 0
+        lastY = y
+    }
+    onMounted(() => {
+        lastY = getY()
+        document.addEventListener('scroll', onScroll, { passive: true, capture: true })
+        window.addEventListener('scroll', onScroll, { passive: true })
+    })
+    onBeforeUnmount(() => {
+        document.removeEventListener('scroll', onScroll, true)
+        window.removeEventListener('scroll', onScroll)
+    })
+}
 
 await useAsyncData('catalog', async () => { await catalog.fetchAll(); return true })
 
@@ -32,14 +61,23 @@ const sets = computed(() => catalog.sets)
 /** Товары секции: для «Хитов» — тег «хит», для «Наборов» — пусто (рендерим наборы), иначе — ручной список. */
 function sectionProducts(s: HomeSection): Product[] {
     if (s.isSets) return []
-    if (s.isHits) return catalog.products.filter((p) => p.tags?.includes('хит'))
+    const auto = s.isHits
+        ? catalog.products.filter((p) => p.tags?.includes('хит'))
+        : s.fromCategory && s.category
+            ? catalog.products.filter((p) => p.category?.id === s.category!.id)
+            : null
+    if (auto) {
+        const av = auto.filter((p) => p.available !== false)
+        return s.limit ? av.slice(0, s.limit) : av
+    }
     return (s.products || []).filter((p) => p.available !== false)
 }
 
 /** Пункты меню — только видимые + непустые секции. */
 const menu = computed(() =>
     catalog.homeSections.filter((s) =>
-        s.visible && (s.isSets ? sets.value.length > 0 : (s.isHits || sectionProducts(s).length > 0 || s.category)),
+        // Пустые «Хиты»/категория не показываем: пункт меню вёл бы в никуда.
+        s.visible && (s.isSets ? sets.value.length > 0 : (sectionProducts(s).length > 0 || (!s.isHits && !!s.category))),
     ),
 )
 
@@ -60,13 +98,13 @@ const activeBanner = ref(0)
 function onBannersScroll() {
     const el = bannersEl.value
     if (!el) return
-    const cardWidth = 340 + 12 // ширина карточки + gap-3
+    const cardWidth = 320 + 12 // ширина карточки + gap-3
     activeBanner.value = Math.round(el.scrollLeft / cardWidth)
 }
 function scrollToBanner(idx: number) {
     const el = bannersEl.value
     if (!el) return
-    const cardWidth = 340 + 12
+    const cardWidth = 320 + 12
     el.scrollTo({ left: idx * cardWidth, behavior: 'smooth' })
 }
 
@@ -83,8 +121,9 @@ function fmt(v: number) {
 </script>
 
 <template>
-    <!-- Top bar -->
-    <header class="sticky top-0 z-20 bg-bg px-4 pt-3 pb-2">
+    <!-- Top bar — auto-hide на скролле вниз -->
+    <header class="sticky top-0 z-20 bg-bg px-4 pt-3 pb-2 transition-transform duration-300 ease-out"
+            :class="headerHidden ? '-translate-y-full' : 'translate-y-0'">
         <div class="flex items-center justify-between gap-2">
             <div class="flex items-center gap-2 min-h-11 text-ink min-w-0">
                 <BrandLogo :size="24" class="text-acc shrink-0" />
@@ -108,11 +147,6 @@ function fmt(v: number) {
                 </NuxtLink>
             </div>
         </div>
-        <NuxtLink to="/search"
-                    class="mt-3 h-[50px] rounded-2xl bg-sf border border-ln text-fnt flex items-center gap-2.5 px-3.5 font-semibold text-[15px]">
-            <Icon name="search" :size="20" />
-            Том-ям, крем-суп, набор…
-        </NuxtLink>
     </header>
 
     <!-- Call-to-order: главный способ сделать заказ по телефону (номер из админки) -->
@@ -143,38 +177,15 @@ function fmt(v: number) {
                            :is="b.linkUrl ? 'a' : 'div'"
                            :href="b.linkUrl || undefined"
                            :data-idx="i"
-                           class="group relative block w-[340px] h-[200px] rounded-[28px] overflow-hidden bg-deep text-deepink no-underline snap-start active:scale-[0.98] transition will-change-transform shadow-[0_12px_32px_-14px_rgba(0,0,0,0.35)]">
-                    <!-- Фон: картинка (с мягким zoom-эффектом при hover) или мягкий градиент. -->
+                           class="group relative block w-[320px] h-[180px] rounded-[24px] overflow-hidden bg-sf no-underline snap-start active:scale-[0.98] transition will-change-transform shadow-[0_12px_32px_-14px_rgba(0,0,0,0.25)]">
+                    <!-- Только картинка на всю карточку, без надписей/кнопок. -->
                     <img v-if="b.image?.url" :src="mediaUrl(b.image.url)" :alt="b.title"
                          class="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-500" />
-                    <div v-else class="absolute inset-0 bg-gradient-to-br from-acc via-acct to-deep"></div>
-
-                    <!-- Градиент для читаемости текста (слева направо, с акцентом снизу). -->
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
-                    <div v-if="b.image?.url" class="absolute inset-0 bg-gradient-to-r from-black/55 via-black/20 to-transparent"></div>
-
-                    <!-- Бейдж скидки / метка кампании -->
-                    <div class="absolute top-4 right-4 inline-flex items-center gap-1 rounded-full bg-acc text-white px-3 py-1 font-extrabold text-[11px] uppercase tracking-wider shadow-[0_6px_16px_-6px_rgba(214,58,28,0.6)]">
-                        <span class="pi pi-tag text-[10px]"></span>
-                        Акция
-                    </div>
-
-                    <!-- Контент: текст сверху-слева, CTA снизу. -->
-                    <div class="absolute inset-0 p-5 flex flex-col justify-between z-10">
-                        <div class="w-[240px] flex flex-col gap-1.5">
-                            <span class="font-display font-black text-[22px] leading-[1.1] text-white drop-shadow-sm">
-                                {{ b.title }}
-                            </span>
-                            <span v-if="b.subtitle" class="text-[13px] text-white/90 leading-snug line-clamp-2">
-                                {{ b.subtitle }}
-                            </span>
-                        </div>
-
-                        <div v-if="b.linkUrl" class="self-start inline-flex items-center gap-1.5 bg-white/95 backdrop-blur font-extrabold text-[12px] uppercase tracking-wider px-3 py-1.5 rounded-full"
-                             style="color: #111">
-                            Подробнее
-                            <span class="pi pi-arrow-right text-[11px]"></span>
-                        </div>
+                    <!-- Fallback если картинки нет — чтобы пустая карточка не выглядела сломанной. -->
+                    <div v-else class="absolute inset-0 bg-gradient-to-br from-acc via-acct to-deep flex items-center justify-center p-5">
+                        <span class="font-display font-black text-[20px] leading-tight text-white text-center">
+                            {{ b.title }}
+                        </span>
                     </div>
                 </component>
             </div>
@@ -228,16 +239,20 @@ function fmt(v: number) {
         </NuxtLink>
     </section>
 
-    <!-- Меню секций — горизонтальные пилюли с иконкой, ссылка на /category/:slug или /sets -->
-    <section v-if="menu.length" class="pt-5 flex flex-col gap-3">
+    <!-- Меню секций — крупные квадратные плитки с иконкой в кружке -->
+    <section v-if="menu.length" class="pt-6 flex flex-col gap-3.5">
         <h2 class="m-0 px-4 font-display font-black text-[24px]">Что заказать</h2>
         <nav aria-label="Разделы меню" class="pb-1 overflow-x-auto no-scrollbar">
-            <div class="flex gap-2 px-4 w-max">
+            <div class="flex gap-3 px-4 w-max">
                 <button v-for="s in menu" :key="s.id" type="button"
                         @click="openSection(s)"
-                        class="min-h-11 pl-3 pr-4 rounded-full bg-sf border border-ln2 text-ink font-bold text-[14px] flex items-center gap-2 active:scale-95 transition">
-                    <Icon :name="s.icon || 'catalog'" :size="18" :stroke="2.2" class="text-acct" />
-                    {{ s.title }}
+                        class="group w-[180px] h-[64px] rounded-[18px] bg-sf border border-ln2 text-ink flex items-center gap-2 px-2.5 active:scale-95 transition hover:border-acc/40 shadow-[0_4px_14px_-8px_rgba(0,0,0,0.12)]">
+                    <div class="shrink-0 size-10 rounded-xl bg-acc/10 flex items-center justify-center group-hover:bg-acc/20 transition">
+                        <Icon :name="s.icon || 'catalog'" :size="22" :stroke="2.2" class="text-acct" />
+                    </div>
+                    <span class="flex-1 min-w-0 font-bold text-[16px] leading-tight text-left line-clamp-2">
+                        {{ s.title }}
+                    </span>
                 </button>
             </div>
         </nav>
@@ -304,6 +319,10 @@ function fmt(v: number) {
             <div class="px-4 flex items-baseline justify-between gap-3">
                 <h2 class="m-0 font-display font-black text-[24px]">{{ s.title }}</h2>
                 <NuxtLink v-if="s.category?.slug" :to="`/category/${s.category.slug}`"
+                            class="text-[13px] font-extrabold text-acct no-underline shrink-0">
+                    Все →
+                </NuxtLink>
+                <NuxtLink v-else-if="s.isHits" to="/hits"
                             class="text-[13px] font-extrabold text-acct no-underline shrink-0">
                     Все →
                 </NuxtLink>
