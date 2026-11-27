@@ -194,7 +194,7 @@ function onShare() {
                     <div class="flex items-center">
                         <template v-for="(it, idx) in (s.items || []).slice(0, 3)" :key="idx">
                             <img v-if="productImg(it.product)" :src="productImg(it.product)" :alt="it.product?.name"
-                                 class="size-14 object-cover rounded-full" :class="idx ? '-ml-4' : ''"
+                                 class="bg-[#F7E0B5] size-14 object-cover rounded-full" :class="idx ? '-ml-4' : ''"
                                  style="box-shadow: 0 0 0 2.5px var(--color-deep)" />
                             <span v-else :class="idx ? '-ml-4' : ''" class="rounded-full" style="box-shadow: 0 0 0 2.5px var(--color-deep)">
                                 <SoupPuck :variant="it.product?.variant ?? 'default'" :size="56" :ring="false" :shadow="false" />

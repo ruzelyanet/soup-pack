@@ -40,7 +40,7 @@ function fmt(v: number) {
                 <div class="flex items-center">
                     <template v-for="(it, idx) in s.items.slice(0, 3)" :key="idx">
                         <img v-if="productImg(it.product)" :src="productImg(it.product)" :alt="it.product?.name"
-                             class="size-16 object-cover rounded-full"
+                             class="bg-[#F7E0B5] size-16 object-cover rounded-full"
                              :class="idx === 0 ? '' : '-ml-4.5'"
                              style="box-shadow: 0 0 0 3px var(--color-deep)" />
                         <SoupPuck v-else

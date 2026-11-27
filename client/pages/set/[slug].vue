@@ -59,7 +59,7 @@ function addSet() {
             <div class="pt-12 flex items-center justify-center">
                 <template v-for="(it, idx) in set.items.slice(0, 4)" :key="idx">
                     <img v-if="productImg(it.product)" :src="productImg(it.product)" :alt="it.product?.name"
-                         class="size-[90px] object-cover rounded-full"
+                         class="bg-[#F7E0B5] size-[90px] object-cover rounded-full"
                          :style="{ marginLeft: idx === 0 ? '0' : '-26px', boxShadow: '0 0 0 4px var(--color-deep)' }" />
                     <SoupPuck v-else :variant="it.product?.variant ?? 'default'"
                               :size="90"
@@ -91,7 +91,7 @@ function addSet() {
                 <div v-for="it in set.items" :key="it.product.id"
                      class="flex items-center gap-3">
                     <img v-if="productImg(it.product)" :src="productImg(it.product)" :alt="it.product?.name"
-                         class="size-[48px] object-cover rounded-full shrink-0" />
+                         class="bg-[#F7E0B5] size-[48px] object-cover rounded-full shrink-0" />
                     <SoupPuck v-else :variant="it.product?.variant ?? 'default'" :size="48"
                               :ring="false" :shadow="false" />
                     <div class="flex-1 min-w-0">

@@ -4,6 +4,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCatalog } from '@/stores/catalog'
 import { useAuth } from '@/stores/auth'
+import { useCart } from '@/stores/cart'
 import { useUi } from '@/stores/ui'
 import ProductCard from '@/components/ProductCard.vue'
 import SoupPuck from '@/components/SoupPuck.vue'
@@ -14,6 +15,12 @@ import type { HomeSection, Product } from '@/types'
 
 const catalog = useCatalog()
 const auth = useAuth()
+const cart = useCart()
+
+/** Сколько экземпляров набора уже в корзине — показываем счётчиком на кнопке «+». */
+function setQty(id: number): number {
+    return cart.items.find((i) => i.type === 'set' && i.refId === id)?.qty ?? 0
+}
 const ui = useUi()
 const router = useRouter()
 
@@ -281,7 +288,7 @@ function fmt(v: number) {
                         <div class="flex items-center">
                             <template v-for="(it, idx) in os.items.slice(0, 3)" :key="idx">
                                 <img v-if="productImg(it.product)" :src="productImg(it.product)" :alt="it.product?.name"
-                                     class="size-16 object-cover rounded-full"
+                                     class="bg-[#F7E0B5] size-16 object-cover rounded-full"
                                      :class="idx === 0 ? '' : '-ml-4.5'"
                                      style="box-shadow: 0 0 0 3px var(--color-deep)" />
                                 <SoupPuck v-else
@@ -308,9 +315,16 @@ function fmt(v: number) {
                                     {{ fmt(Number((os as any).pricing?.finalPrice ?? 0)) }}
                                 </span>
                             </div>
-                            <button type="button" aria-label="В корзину"
-                                    class="size-11 rounded-full bg-btr text-ink flex items-center justify-center active:scale-95 transition">
+                            <!-- Кнопка внутри ссылки на набор: .prevent.stop — добавляем в корзину, а не открываем набор -->
+                            <button type="button" :aria-label="`Добавить набор «${os.name}» в корзину`"
+                                    @click.prevent.stop="cart.addSet(os, 1)"
+                                    class="relative size-11 rounded-full bg-btr text-ink flex items-center justify-center active:scale-90 transition">
                                 <Icon name="plus" :size="20" :stroke="2.8" />
+                                <span v-if="setQty(os.id)"
+                                      class="absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1 rounded-full bg-acc text-white text-[11px] font-extrabold flex items-center justify-center"
+                                      style="box-shadow: 0 0 0 2px var(--color-deep)">
+                                    {{ setQty(os.id) }}
+                                </span>
                             </button>
                         </div>
                     </NuxtLink>

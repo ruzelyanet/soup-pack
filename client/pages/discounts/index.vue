@@ -254,7 +254,7 @@ function addHero() {
                         <div class="flex items-center">
                             <template v-for="(it, idx) in (c.sets[0]?.items || []).slice(0, 3)" :key="idx">
                                 <img v-if="productImg(it.product)" :src="productImg(it.product)" :alt="it.product?.name"
-                                     class="size-16 object-cover rounded-full" :class="idx ? '-ml-[18px]' : ''"
+                                     class="bg-[#F7E0B5] size-16 object-cover rounded-full" :class="idx ? '-ml-[18px]' : ''"
                                      style="box-shadow: 0 0 0 3px var(--color-deep)" />
                                 <span v-else :class="idx ? '-ml-[18px]' : ''" class="rounded-full" style="box-shadow: 0 0 0 3px var(--color-deep)">
                                     <SoupPuck :variant="it.product?.variant ?? 'default'" :size="64" :ring="false" :shadow="false" />

@@ -151,7 +151,7 @@ function fmt(v: number) { return new Intl.NumberFormat('ru-RU').format(v) + ' с
                             <template v-for="(it, i) in c.setItems" :key="i">
                                 <img v-if="productImg(it.product)"
                                      :src="productImg(it.product)!" :alt="it.product?.name"
-                                     class="size-14 object-cover rounded-full"
+                                     class="bg-[#F7E0B5] size-14 object-cover rounded-full"
                                      :class="i === 0 ? '' : '-ml-4'"
                                      style="box-shadow: 0 0 0 3px var(--color-deep)" />
                                 <SoupPuck v-else
