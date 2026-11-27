@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { OG_CHEF, seoSiteUrl } from '@/utils/seo'
-import { ref } from 'vue'
+import { onBeforeUnmount } from 'vue'
+import 'glightbox/dist/css/glightbox.min.css'
 import { useRouter } from 'vue-router'
 import Icon from '@/components/Icon.vue'
 
@@ -36,7 +37,28 @@ const gallery = [
     '/chef/photo-02.jpeg',
 ]
 
-const lightbox = ref<string | null>(null)
+/* Просмотр фото — GLightbox: свайп и стрелки между фото, увеличение, закрытие жестом вниз / Esc.
+ * Библиотека трогает window, поэтому грузим её только в браузере и только по клику. */
+const caption = (i: number) => `Шеф-повар Мирзахаким Газиев — фото ${i + 1} из ${gallery.length}`
+let lb: any = null
+async function openGallery(index: number) {
+    if (!lb) {
+        const { default: GLightbox } = await import('glightbox')
+        lb = GLightbox({
+            // типы glightbox объявляют elements как [] — приводим
+            elements: gallery.map((href, i) => ({ href, type: 'image', alt: caption(i) })) as any,
+            loop: true,
+            touchNavigation: true,
+            zoomable: true,
+            draggable: true,
+            closeOnOutsideClick: true,
+            openEffect: 'fade',
+            closeEffect: 'fade',
+        })
+    }
+    lb.openAt(index)
+}
+onBeforeUnmount(() => { try { lb?.destroy() } catch { /* noop */ } lb = null })
 </script>
 
 <template>
@@ -165,10 +187,11 @@ const lightbox = ref<string | null>(null)
             <h3 class="px-4 m-0 font-display font-black text-[20px]">Галерея</h3>
             <div class="mt-4 overflow-x-auto no-scrollbar">
                 <div class="flex gap-2.5 px-4 w-max">
-                    <button v-for="src in gallery" :key="src" type="button"
-                            @click="lightbox = src"
-                            class="shrink-0 w-[180px] h-[240px] rounded-[18px] overflow-hidden bg-sf p-0 border-0 cursor-pointer">
-                        <img :src="src" :alt="''" loading="lazy"
+                    <button v-for="(src, i) in gallery" :key="src" type="button"
+                            :aria-label="`Открыть фото ${i + 1} из ${gallery.length}`"
+                            @click="openGallery(i)"
+                            class="shrink-0 w-[180px] h-[240px] rounded-[18px] overflow-hidden bg-sf p-0 border-0 cursor-zoom-in active:scale-[0.98] transition">
+                        <img :src="src" :alt="caption(i)" loading="lazy"
                              class="w-full h-full object-cover" />
                     </button>
                 </div>
@@ -189,16 +212,5 @@ const lightbox = ref<string | null>(null)
             </p>
         </section>
 
-        <!-- Lightbox -->
-        <div v-if="lightbox"
-             class="fixed inset-0 z-[9999] bg-black/90 flex items-center justify-center p-4"
-             @click="lightbox = null">
-            <img :src="lightbox" alt="" class="max-w-full max-h-full object-contain rounded-xl" />
-            <button type="button" aria-label="Закрыть"
-                    class="absolute top-4 right-4 size-11 rounded-full bg-white/10 text-white flex items-center justify-center"
-                    @click.stop="lightbox = null">
-                <Icon name="close" :size="22" :stroke="2.4" />
-            </button>
-        </div>
     </section>
 </template>

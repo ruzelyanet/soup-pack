@@ -18,6 +18,7 @@
     "@primevue/themes": "^4.5.4",
     "@tailwindcss/vite": "^4.3.3",
     "axios": "^1.21.0",
+    "glightbox": "^3.3.1",
     "leaflet": "^1.9.4",
     "nuxt": "^3.14.1592",
     "nuxt-schema-org": "^6.4.3",
