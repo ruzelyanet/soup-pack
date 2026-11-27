@@ -3,7 +3,6 @@ import { useRouter } from 'vue-router'
 import Icon from '@/components/Icon.vue'
 import { useCatalog } from '@/stores/catalog'
 import DeliveryMethodsList from '@/components/DeliveryMethodsList.vue'
-import { computed } from 'vue'
 
 const router = useRouter()
 const goBack = useGoBack()
@@ -21,14 +20,6 @@ const payMethods = [
     { title: 'Переводом',       text: 'На карту менеджера. Подтверждаем заказ после поступления.' },
     { title: 'Click, Payme',    text: 'Подключим в ближайшее время. Пока недоступно.' },
 ]
-
-/** Стоимость для героя: «бесплатно», если есть бесплатный способ, иначе «от N сум». */
-const priceFrom = computed(() => {
-    const ms = catalog.deliveryMethods || []
-    if (!ms.length) return null
-    const min = Math.min(...ms.map((m) => Number(m.price || 0)))
-    return min > 0 ? `от ${new Intl.NumberFormat('ru-RU').format(min)} сум` : 'бесплатно'
-})
 
 const steps = [
     { num: '1', title: 'Собираем заказ',    text: 'Готовим шайбы к отправке, упаковываем в термопакет — обычно в пределах 10 минут.' },
@@ -70,21 +61,13 @@ const rules = [
                     После подтверждения заказа отправляем его выбранным способом доставки —
                     способы и их стоимость перечислены ниже.
                 </p>
-                <div class="mt-1 grid grid-cols-2 gap-2">
+                <div class="mt-1 flex">
                     <div class="bg-[rgba(255,241,220,0.08)] rounded-[16px] p-3 flex flex-col gap-1">
                         <span class="font-display font-black text-[22px] text-btr leading-none">
                             30–50&nbsp;мин
                         </span>
                         <span class="text-[11px] font-bold uppercase tracking-wider text-deepmut">
                             доставка по городу
-                        </span>
-                    </div>
-                    <div v-if="priceFrom" class="bg-[rgba(255,241,220,0.08)] rounded-[16px] p-3 flex flex-col gap-1">
-                        <span class="font-display font-black text-[22px] text-btr leading-none">
-                            {{ priceFrom }}
-                        </span>
-                        <span class="text-[11px] font-bold uppercase tracking-wider text-deepmut">
-                            стоимость доставки
                         </span>
                     </div>
                 </div>
