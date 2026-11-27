@@ -8,10 +8,14 @@ import SoupPuck from '@/components/SoupPuck.vue'
 import { productImg } from '@/services/api'
 import Icon from '@/components/Icon.vue'
 import UpsellPickerModal from '@/components/UpsellPickerModal.vue'
+import DeliveryMethodsList from '@/components/DeliveryMethodsList.vue'
 
 const cart = useCart()
 const catalog = useCatalog()
 const router = useRouter()
+
+// Каталог (товары, наборы, способы доставки) — на случай прямого захода в корзину.
+await useAsyncData('catalog', async () => { await catalog.fetchAll(); return true })
 
 function productOf(id: number) { return catalog.products.find((p) => p.id === id) }
 function setOf(id: number) { return catalog.sets.find((s) => s.id === id) }
@@ -295,20 +299,28 @@ function fmt(v: number) { return new Intl.NumberFormat('ru-RU').format(v) + ' с
                     <dt class="text-mut">Скидка</dt>
                     <dd class="m-0 font-extrabold text-acct">−{{ fmt(cart.discountTotal) }}</dd>
                 </div>
-                <div class="flex justify-between items-baseline">
+                <!-- Доставка: способы из админки (цена, описание, скидка) — выбор при оформлении -->
+                <div class="h-px bg-ln"></div>
+                <div class="grid grid-cols-[1fr_auto] items-baseline gap-y-2.5">
                     <dt class="text-mut">Доставка</dt>
-                    <dd class="m-0 font-bold text-right flex flex-col items-end">
-                        <span>Яндекс Такси · клиент оплачивает</span>
+                    <dd class="m-0 text-right">
                         <NuxtLink to="/delivery"
-                                    class="text-[12px] font-semibold text-acct underline underline-offset-2">
+                                  class="text-[12px] font-semibold text-acct underline underline-offset-2">
                             условия и оплата
                         </NuxtLink>
                     </dd>
+                    <dd class="m-0 col-span-2">
+                        <DeliveryMethodsList :subtotal="cart.subtotal" variant="compact" />
+                    </dd>
                 </div>
                 <div class="h-px bg-ln"></div>
-                <div class="flex justify-between items-baseline">
+                <div class="grid grid-cols-[1fr_auto] items-baseline">
                     <dt class="font-extrabold">Итого</dt>
                     <dd class="m-0 font-display font-black text-[22px]">{{ fmt(cart.total) }}</dd>
+                    <dd v-if="(catalog.deliveryMethods || []).some((m) => m.price > 0)"
+                        class="m-0 col-span-2 text-[12px] text-fnt text-right">
+                        без учёта доставки — способ выберете при оформлении
+                    </dd>
                 </div>
             </dl>
         </section>

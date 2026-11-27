@@ -2,6 +2,8 @@
 import { useRouter } from 'vue-router'
 import Icon from '@/components/Icon.vue'
 import { useCatalog } from '@/stores/catalog'
+import DeliveryMethodsList from '@/components/DeliveryMethodsList.vue'
+import { computed } from 'vue'
 
 const router = useRouter()
 const goBack = useGoBack()
@@ -20,10 +22,18 @@ const payMethods = [
     { title: 'Click, Payme',    text: 'Подключим в ближайшее время. Пока недоступно.' },
 ]
 
+/** Стоимость для героя: «бесплатно», если есть бесплатный способ, иначе «от N сум». */
+const priceFrom = computed(() => {
+    const ms = catalog.deliveryMethods || []
+    if (!ms.length) return null
+    const min = Math.min(...ms.map((m) => Number(m.price || 0)))
+    return min > 0 ? `от ${new Intl.NumberFormat('ru-RU').format(min)} сум` : 'бесплатно'
+})
+
 const steps = [
     { num: '1', title: 'Собираем заказ',    text: 'Готовим шайбы к отправке, упаковываем в термопакет — обычно в пределах 10 минут.' },
-    { num: '2', title: 'Вызываем Яндекс',   text: 'Оформляем Яндекс Такси от нашей кухни до вашего адреса. Это обычное такси — везёт заказ пассажиром в салоне.' },
-    { num: '3', title: 'Клиент оплачивает', text: 'Стоимость поездки — по счётчику Яндекс Такси. Оплата водителю напрямую: наличными или картой в приложении.' },
+    { num: '2', title: 'Отправляем',        text: 'Передаём заказ выбранным способом доставки — от нашей кухни до вашего адреса.' },
+    { num: '3', title: 'Стоимость — в чеке', text: 'Цена доставки зависит от способа и сразу видна в корзине и при оформлении заказа.' },
     { num: '4', title: 'Разогрейте',        text: 'В микроволновке 4–5 минут или на плите в кастрюле 7–10 минут.' },
 ]
 
@@ -45,7 +55,7 @@ const rules = [
             <h1 class="m-0 font-display font-black text-[26px] flex-1">Доставка&nbsp;и&nbsp;оплата</h1>
         </header>
 
-        <!-- Hero: отправляем через Яндекс Такси -->
+        <!-- Hero: доставка по городу (способы и цены — из админки, ниже) -->
         <section class="relative mx-4 rounded-[26px] overflow-hidden bg-deep text-deepink p-6">
             <div class="absolute -right-10 -top-10 size-48 rounded-full bg-acc/30 blur-3xl"></div>
             <div class="relative flex flex-col gap-3">
@@ -54,12 +64,11 @@ const rules = [
                     Доставка по городу
                 </div>
                 <h2 class="m-0 font-display font-black text-[26px] leading-tight">
-                    Отправляем через <span class="text-btr">Яндекс&nbsp;Такси</span>
+                    Привезём по <span class="text-btr">Ташкенту</span>
                 </h2>
                 <p class="m-0 text-[14px] text-deepmut leading-relaxed">
-                    Мы не работаем как служба доставки. После подтверждения заказа мы
-                    сами вызываем Яндекс Такси от нашей кухни до вашего адреса —
-                    стоимость поездки клиент оплачивает водителю.
+                    После подтверждения заказа отправляем его выбранным способом доставки —
+                    способы и их стоимость перечислены ниже.
                 </p>
                 <div class="mt-1 grid grid-cols-2 gap-2">
                     <div class="bg-[rgba(255,241,220,0.08)] rounded-[16px] p-3 flex flex-col gap-1">
@@ -70,41 +79,26 @@ const rules = [
                             доставка по городу
                         </span>
                     </div>
-                    <div class="bg-[rgba(255,241,220,0.08)] rounded-[16px] p-3 flex flex-col gap-1">
+                    <div v-if="priceFrom" class="bg-[rgba(255,241,220,0.08)] rounded-[16px] p-3 flex flex-col gap-1">
                         <span class="font-display font-black text-[22px] text-btr leading-none">
-                            по тарифу
+                            {{ priceFrom }}
                         </span>
                         <span class="text-[11px] font-bold uppercase tracking-wider text-deepmut">
-                            клиент платит сам
+                            стоимость доставки
                         </span>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Стоимость -->
+        <!-- Способы и стоимость — из админки (сущность «Доставка»): цена, описание, скидки -->
         <section class="px-4 pt-8 flex flex-col gap-3">
-            <h3 class="m-0 font-display font-black text-[22px]">Сколько стоит доставка</h3>
-            <div class="bg-sf rounded-[20px] p-5 flex flex-col gap-3">
-                <p class="m-0 text-[14px] text-mut leading-relaxed">
-                    Стоимость поездки считает Яндекс Такси по действующему тарифу
-                    в момент заказа. Это обычная цена такси от нашей кухни до вашего
-                    адреса — такая же, как если бы вы вызвали такси сами.
-                </p>
-                <div class="bg-sf2 rounded-xl p-3.5 flex gap-3">
-                    <div class="shrink-0 size-10 rounded-xl bg-acc/15 text-acct flex items-center justify-center">
-                        <Icon name="receipt" :size="20" :stroke="2.2" />
-                    </div>
-                    <div class="flex-1">
-                        <div class="font-extrabold text-[14px]">Оплата доставки — напрямую водителю</div>
-                        <div class="text-[13px] text-mut leading-relaxed mt-0.5">
-                            Поездку оплачиваете вы: наличными при получении или
-                            картой через приложение Яндекс Такси. В счёт SoupPack
-                            стоимость такси не входит.
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <h3 class="m-0 font-display font-black text-[22px]">Способы и стоимость</h3>
+            <DeliveryMethodsList variant="full" />
+            <p class="m-0 px-1 text-[12px] text-fnt leading-relaxed">
+                Способ доставки выбираете при оформлении заказа. Скидка, привязанная к способу доставки,
+                применяется к заказу автоматически, если выполнены её условия.
+            </p>
         </section>
 
         <!-- Как это работает -->
@@ -140,8 +134,7 @@ const rules = [
                 </li>
             </ul>
             <p class="m-0 px-1 text-[12px] text-fnt leading-relaxed">
-                Это оплата заказа SoupPack. Стоимость самой доставки
-                (Яндекс Такси) оплачивается отдельно — напрямую водителю.
+                Стоимость доставки зависит от выбранного способа — смотрите «Способы и стоимость» выше.
             </p>
         </section>
 
