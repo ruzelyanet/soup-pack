@@ -61,15 +61,13 @@ const rules = [
                     После подтверждения заказа отправляем его выбранным способом доставки —
                     способы и их стоимость перечислены ниже.
                 </p>
-                <div class="mt-1 flex">
-                    <div class="bg-[rgba(255,241,220,0.08)] rounded-[16px] p-3 flex flex-col gap-1">
-                        <span class="font-display font-black text-[22px] text-btr leading-none">
-                            30–50&nbsp;мин
-                        </span>
-                        <span class="text-[11px] font-bold uppercase tracking-wider text-deepmut">
-                            доставка по городу
-                        </span>
-                    </div>
+                <div class="mt-1 bg-[rgba(255,241,220,0.08)] rounded-[16px] px-4 py-3 flex items-center justify-between gap-3">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-deepmut">
+                        доставка по городу
+                    </span>
+                    <span class="font-display font-black text-[22px] text-btr leading-none whitespace-nowrap">
+                        30–50&nbsp;мин
+                    </span>
                 </div>
             </div>
         </section>
